@@ -1,0 +1,7 @@
+data/mels/
+data/raw/
+data/manifest.csv
+checkpoints/
+logs/
+__pycache__/
+*.pyc
