@@ -61,17 +61,19 @@ from training_texts import TEXTS
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def clean_filename(name: str) -> str:
-    """Strip extension and sanitize a filename for comparison."""
-    name = Path(name).stem                  # drop extension
-    name = re.sub(r'[_\-]+', ' ', name)     # _ and - -> space
-    name = re.sub(r'\s+', ' ', name).strip()
-    return name.lower()
-
-
-def clean_text(text: str) -> str:
-    """Normalize text for comparison."""
-    return re.sub(r'\s+', ' ', text).strip().lower()
+def normalize(s: str) -> str:
+    """Normalize string the way Poe generates filenames:
+    - Remove [brackets] but keep tag words
+    - Remove all punctuation
+    - Collapse whitespace, lowercase
+    Works for both filenames and corpus texts.
+    """
+    s = Path(s).stem if '.' in s[-5:] else s   # strip extension if present
+    s = re.sub(r'\[([^\]]+)\]', r'\1', s)       # [tag] -> tag
+    s = re.sub(r"[^\w\s]", ' ', s)              # strip punctuation
+    s = re.sub(r'[_\-]+', ' ', s)               # _ - -> space
+    s = re.sub(r'\s+', ' ', s).strip()
+    return s.lower()
 
 
 def similarity(a: str, b: str) -> float:
@@ -79,13 +81,18 @@ def similarity(a: str, b: str) -> float:
 
 
 def best_match(filename: str, texts: list[str], threshold: float) -> tuple[int, float] | None:
-    """Return (index, score) of the best-matching text, or None if below threshold."""
-    cleaned_fn = clean_filename(filename)
+    """Return (index, score) of the best-matching text, or None if below threshold.
+    Handles both ElevenLabs (truncated text) and Poe (full text, no punctuation) filenames.
+    """
+    norm_fn = normalize(filename)
     best_i, best_score = -1, 0.0
     for i, text in enumerate(texts):
-        # Compare against the first 80 chars of the text (that's what ElevenLabs uses for filename)
-        preview = clean_text(text[:80])
-        score   = similarity(cleaned_fn, preview)
+        norm_text = normalize(text)
+        # Full comparison
+        score = similarity(norm_fn, norm_text)
+        # Also try matching filename against truncated text (ElevenLabs truncates at ~80 chars)
+        score2 = similarity(norm_fn, norm_text[:len(norm_fn) + 15])
+        score = max(score, score2)
         if score > best_score:
             best_score = score
             best_i     = i
@@ -136,10 +143,14 @@ def convert_to_wav(src: Path, dst: Path) -> bool:
 
 def import_folder(folder: Path, voice_name: str, texts: list[str],
                   threshold: float, dry_run: bool) -> list[dict]:
-    """Match all audio files in folder to texts, convert + rename, return manifest rows."""
+    """Match all audio files in folder to texts, convert + rename, return manifest rows.
+
+    Uses optimal conflict resolution: scores ALL files against ALL texts first,
+    then assigns highest-score pairs greedily so music files never steal slots
+    from real training clips.
+    """
     audio_exts = {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac"}
-    files      = sorted([f for f in folder.iterdir()
-                         if f.suffix.lower() in audio_exts])
+    files = [f for f in folder.iterdir() if f.suffix.lower() in audio_exts]
 
     if not files:
         print(f"  [!] No audio files found in {folder}")
@@ -147,68 +158,75 @@ def import_folder(folder: Path, voice_name: str, texts: list[str],
 
     print(f"\n  {len(files)} files found in {folder.name}/")
 
+    # Score every file against every text
+    scores = []  # (score, file_idx, text_idx)
+    for fi, f in enumerate(files):
+        for ti, text in enumerate(texts):
+            s = similarity(normalize(f.stem), normalize(text))
+            if s >= threshold:
+                scores.append((s, fi, ti))
+
+    # Sort by score descending, greedily assign best matches
+    scores.sort(reverse=True)
+    assigned_files = {}  # file_idx -> (text_idx, score)
+    assigned_texts = {}  # text_idx -> (file_idx, score)
+    for s, fi, ti in scores:
+        if fi not in assigned_files and ti not in assigned_texts:
+            assigned_files[fi] = (ti, s)
+            assigned_texts[ti] = (fi, s)
+
     out_voice = OUT_DIR / voice_name.lower()
     if not dry_run:
         out_voice.mkdir(parents=True, exist_ok=True)
 
-    rows       = []
-    used_texts = set()
-
-    for f in files:
-        match = best_match(f.name, texts, threshold)
-        if match is None:
-            print(f"  [NO MATCH] {f.name[:60]}  (threshold={threshold})")
+    rows = []
+    for fi, f in enumerate(files):
+        name_safe = f.name.encode('ascii', errors='replace').decode('ascii')
+        if fi not in assigned_files:
+            print(f"  [skip]    {name_safe[:65]}")
             continue
 
-        idx, score = match
-        if idx in used_texts:
-            print(f"  [DUPLICATE] {f.name[:60]} -> text {idx:03d} already used")
-            continue
-
-        text  = texts[idx]
+        ti, score = assigned_files[fi]
+        text  = texts[ti]
         tags  = extract_tags(text)
         plain = strip_tags(text)
 
-        dst_wav = out_voice / f"{idx:04d}_{voice_name.lower()}.wav"
-        dst_txt = out_voice / f"{idx:04d}_{voice_name.lower()}.txt"
+        dst_wav = out_voice / f"{ti:04d}_{voice_name.lower()}.wav"
+        dst_txt = out_voice / f"{ti:04d}_{voice_name.lower()}.txt"
 
         status = "DRY RUN" if dry_run else "OK"
-        print(f"  [{status}] {f.name[:55]}")
-        print(f"         -> {idx:04d}  score={score:.2f}  tags={tags}")
+        print(f"  [{status}] {name_safe[:55]}")
+        print(f"         -> {ti:04d}  score={score:.2f}  tags={tags}")
 
         if not dry_run:
             ok = convert_to_wav(f, dst_wav)
             if ok:
                 dst_txt.write_text(text, encoding="utf-8")
                 rows.append({
-                    "audio_path": str(dst_wav),
-                    "text":       text,
-                    "plain_text": plain,
-                    "voice":      voice_name.lower(),
-                    "tags":       "|".join(tags),
+                    "audio_path":  str(dst_wav),
+                    "text":        text,
+                    "plain_text":  plain,
+                    "voice":       voice_name.lower(),
+                    "tags":        "|".join(tags),
                     "match_score": f"{score:.3f}",
                 })
-                used_texts.add(idx)
         else:
-            used_texts.add(idx)
             rows.append({
-                "audio_path": str(dst_wav),
-                "text":       text,
-                "plain_text": plain,
-                "voice":      voice_name.lower(),
-                "tags":       "|".join(tags),
+                "audio_path":  str(dst_wav),
+                "text":        text,
+                "plain_text":  plain,
+                "voice":       voice_name.lower(),
+                "tags":        "|".join(tags),
                 "match_score": f"{score:.3f}",
             })
 
-    # Report any unmatched texts
-    matched_idxs = {int(r["audio_path"].split("\\")[-1][:4]) for r in rows}
+    matched_idxs = {int(r["audio_path"].replace("\\","/").split("/")[-1][:4]) for r in rows}
     unmatched    = [i for i in range(len(texts)) if i not in matched_idxs]
     if unmatched:
-        print(f"\n  Unmatched texts ({len(unmatched)}): indices {unmatched[:10]}"
-              + (" ..." if len(unmatched) > 10 else ""))
-        print(f"  Try --threshold lower if files exist but aren't matching.")
+        print(f"\n  Missing texts ({len(unmatched)}): indices {unmatched}")
+        print(f"  These clips weren't found — check Downloads for those files.")
 
-    print(f"\n  Matched: {len(rows)}/{len(files)} files for voice '{voice_name}'")
+    print(f"\n  Matched: {len(rows)}/{len(texts)} texts for voice '{voice_name}'")
     return rows
 
 
