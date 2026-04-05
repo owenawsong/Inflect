@@ -132,19 +132,28 @@ def parse_text(text: str) -> list[tuple[str, str]]:
 # ── Voice loading ─────────────────────────────────────────────────────────────
 
 def load_voice_from_clip(audio_path: str) -> torch.Tensor:
-    """Encode a reference audio clip -> voice pack [511,1,256]."""
+    """Encode a reference audio clip -> voice pack [511,1,256].
+
+    Tries 1d_ref (reference conditioning with soft voice blending) first,
+    falls back to 1c_aug (nearest-voice mapping) if not available.
+    """
     from train_ve import VoiceEncoder
     from train_1b_adapter_v2 import StyleAdapterV2
 
+    ckpt_1d  = CKPT_DIR / "1d_ref_best.pt"
     ckpt_aug = CKPT_DIR / "1c_aug_best.pt"
     ckpt_1c  = CKPT_DIR / "1c_best.pt"
 
-    if ckpt_aug.exists():
+    use_ref_conditioning = ckpt_1d.exists()
+
+    if use_ref_conditioning:
+        ckpt = torch.load(ckpt_1d, map_location=DEVICE, weights_only=False)
+    elif ckpt_aug.exists():
         ckpt = torch.load(ckpt_aug, map_location=DEVICE, weights_only=False)
     elif ckpt_1c.exists():
         ckpt = torch.load(ckpt_1c, map_location=DEVICE, weights_only=False)
     else:
-        raise FileNotFoundError("No 1c checkpoint found.")
+        raise FileNotFoundError("No checkpoint found (need 1d_ref, 1c_aug, or 1c).")
 
     encoder = VoiceEncoder().to(DEVICE)
     encoder.load_state_dict(ckpt["encoder"])
@@ -153,12 +162,30 @@ def load_voice_from_clip(audio_path: str) -> torch.Tensor:
     adapter.load_state_dict(ckpt["adapter"])
     adapter.eval()
 
-    # Compute target norm
-    norms = []
-    for vf in sorted(VOICE_DIR.glob("**/*.pt")):
-        pack = torch.load(vf, map_location="cpu", weights_only=True)
-        norms.append(pack[:, 0, :].norm(dim=-1).mean().item())
-    target_norm = sum(norms) / len(norms)
+    # Load reference voice packs for blending (used by 1d_ref)
+    voice_files = sorted(VOICE_DIR.glob("**/*.pt"))
+    voice_names = [f.stem for f in voice_files]
+    voice_packs = []
+    for vf in voice_files:
+        pack = torch.load(vf, map_location="cpu", weights_only=True)  # [511,1,256]
+        voice_packs.append(pack[:, 0, :])  # [511, 256]
+    voice_packs_t = torch.stack(voice_packs).to(DEVICE)  # [N, 511, 256]
+
+    # Load conditioner if available
+    conditioner = None
+    if use_ref_conditioning and "conditioner" in ckpt:
+        from train_1d_reference_conditioning import ReferenceConditioner
+        conditioner = ReferenceConditioner(dim=256, n_voices=len(voice_names)).to(DEVICE)
+        conditioner.load_state_dict(ckpt["conditioner"])
+        conditioner.eval()
+        print(f"  Using reference conditioning (soft voice blending across {len(voice_names)} voices)")
+    else:
+        # Compute target norm for nearest-voice fallback
+        norms = []
+        for vf in voice_files:
+            pack = torch.load(vf, map_location="cpu", weights_only=True)
+            norms.append(pack[:, 0, :].norm(dim=-1).mean().item())
+        target_norm = sum(norms) / len(norms)
 
     arr, sr = sf.read(audio_path, dtype="float32")
     if arr.ndim > 1:
@@ -174,8 +201,15 @@ def load_voice_from_clip(audio_path: str) -> torch.Tensor:
     batch = log_mel.unsqueeze(0).to(DEVICE)
 
     with torch.no_grad():
-        enc_emb = encoder.embed(batch)
-        style   = adapter(enc_emb) * target_norm
+        enc_emb = encoder.embed(batch)  # [1, 256]
+        if conditioner is not None:
+            # Soft blending: weighted sum of all voice packs
+            weights = conditioner(enc_emb)  # [1, N]
+            style = torch.einsum("bn,ntd->btd", weights, voice_packs_t)  # [1, 511, 256]
+            style = style.unsqueeze(2)  # [1, 511, 1, 256]
+        else:
+            # Nearest-voice mapping (fallback)
+            style = adapter(enc_emb) * target_norm
     return style.squeeze(0).cpu()  # [511,1,256]
 
 
