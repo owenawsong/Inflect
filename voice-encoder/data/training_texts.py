@@ -125,11 +125,11 @@ TEXTS = [
     "One second. [muttering] Seven plus nine is... carry the one... okay yeah sixteen.",
     "I'm not saying I'm lost but [muttering] none of these streets make any sense.",
 
-    # ── WOO / EXCITEMENT ─────────────────────────────────────────────────────
+    # ── EXCITED OUTBURSTS ────────────────────────────────────────────────────
 
-    "We won! After everything, we actually won! [woo] I can't believe it!",
-    "[woo] That's what I'm talking about! Let's go!",
-    "It's finally done. Three years of work. [woo] We're done!",
+    "We won! After everything, we actually won! [excited] I can't believe it!",
+    "[excited] That's what I'm talking about! Yes!",
+    "It's finally done. Three years of work. [excited] We're actually done!",
 
     # ── MIXED / COMPLEX (multiple tags, varied flow) ──────────────────────────
 
