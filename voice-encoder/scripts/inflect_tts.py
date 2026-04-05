@@ -352,6 +352,8 @@ def main():
                         help="'voice_a:0.6,voice_b:0.4'")
     parser.add_argument("--pitch",            type=float, default=1.0,
                         help="Pitch factor (1.0=normal, 1.1=10pct higher)")
+    parser.add_argument("--batch",            type=str,   default=None,
+                        help="Output subfolder name. Auto-timestamp if omitted.")
     parser.add_argument("--use-preprocessor", action="store_true",
                         help="Use TextPreprocessor for per-segment speed/emotion")
     parser.add_argument("--use-llm",          action="store_true",
@@ -522,8 +524,14 @@ def main():
     if args.pitch != 1.0:
         suffix_parts.append(f"pitch{args.pitch:.1f}")
 
+    # Resolve output subfolder
+    from datetime import datetime
+    batch_name = args.batch if args.batch else datetime.now().strftime("%Y%m%d_%H%M%S")
+    batch_dir  = OUT_DIR / batch_name
+    batch_dir.mkdir(parents=True, exist_ok=True)
+
     suffix   = "_".join(suffix_parts)
-    out_path = OUT_DIR / f"{args.out}_{suffix}.wav"
+    out_path = batch_dir / f"{args.out}_{suffix}.wav"
     sf.write(str(out_path), final, TARGET_SR)
     print(f"\nSaved: {out_path}  ({len(final)/TARGET_SR:.1f}s)")
 
