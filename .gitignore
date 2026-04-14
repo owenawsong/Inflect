@@ -1,0 +1,46 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv*/
+
+# Editor and local tool state
+.vscode/
+.claude/
+
+# Local package workspaces / caches
+.chatterbox_pkgs/
+.luxtts_pkgs/
+.resemble_enhance/
+
+# Generated outputs and datasets
+outputs/
+reference_voices/
+reference_voices_backup/
+emotion-deltas/
+preprocess_manifest.json
+
+# Nested external repos / vendored code kept local
+ZipVoice-official/
+third_party/
+
+# Voice encoder artifacts
+voice-encoder/checkpoints/
+voice-encoder/data/raw/
+voice-encoder/data/mels/
+voice-encoder/data/sprites/
+voice-encoder/data/kokoro_voices/
+voice-encoder/data/paralinguistic/
+voice-encoder/data/1c_pairs/
+voice-encoder/logs/
+voice-encoder/outputs/
+
+# Inflect training artifacts
+inflect/data/*.pt
+inflect/data/*.pth
+inflect/para_module/checkpoints/
+inflect/para_module/checkpoints_strict/
+inflect/para_module/test_outputs/
