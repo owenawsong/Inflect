@@ -1,0 +1,473 @@
+diff --git a/zipvoice/bin/train_zipvoice.py b/zipvoice/bin/train_zipvoice.py
+index 59d3ace..def886f 100644
+--- a/zipvoice/bin/train_zipvoice.py
++++ b/zipvoice/bin/train_zipvoice.py
+@@ -40,6 +40,9 @@ import copy
+ import json
+ import logging
+ import os
++import math
++import time
++from contextlib import nullcontext
+ from functools import partial
+ from pathlib import Path
+ from shutil import copyfile
+@@ -259,6 +262,20 @@ def get_parser():
+         """,
+     )
+ 
++    parser.add_argument(
++        "--log-interval",
++        type=int,
++        default=50,
++        help="Print training progress every N optimizer steps.",
++    )
++
++    parser.add_argument(
++        "--skip-bad-batches",
++        type=str2bool,
++        default=True,
++        help="When enabled, skip batches that trigger non-finite gradient update failures instead of aborting the whole run.",
++    )
++
+     parser.add_argument(
+         "--keep-last-k",
+         type=int,
+@@ -369,6 +386,20 @@ def get_parser():
+         "which is a text file with '{token}\t{token_id}' per line.",
+     )
+ 
++    parser.add_argument(
++        "--clipping-scale",
++        type=float,
++        default=2.0,
++        help="Gradient clipping scale passed to ScaledAdam.",
++    )
++
++    parser.add_argument(
++        "--debug-nonfinite",
++        type=str2bool,
++        default=True,
++        help="Log extra batch diagnostics when non-finite loss/gradients occur.",
++    )
++
+     return parser
+ 
+ 
+@@ -415,6 +446,7 @@ def get_params() -> AttributeDict:
+             "batch_idx_train": 0,
+             "log_interval": 50,
+             "reset_interval": 200,
++            "run_start_time": time.time(),
+             "env_info": get_env_info(),
+         }
+     )
+@@ -422,6 +454,35 @@ def get_params() -> AttributeDict:
+     return params
+ 
+ 
++def format_duration(seconds: float | None) -> str:
++    if seconds is None or not math.isfinite(seconds):
++        return "unknown"
++    seconds = max(0, int(seconds))
++    hours, rem = divmod(seconds, 3600)
++    minutes, secs = divmod(rem, 60)
++    if hours > 0:
++        return f"{hours:d}h{minutes:02d}m{secs:02d}s"
++    if minutes > 0:
++        return f"{minutes:d}m{secs:02d}s"
++    return f"{secs:d}s"
++
++
++def progress_stats(params: AttributeDict) -> tuple[str, float | None, float | None, str]:
++    elapsed = time.time() - params.run_start_time
++    steps_done = max(0, int(params.batch_idx_train))
++    steps_per_sec = (steps_done / elapsed) if elapsed > 0 and steps_done > 0 else None
++    eta_seconds = None
++    progress = "unknown"
++    if params.num_iters and params.num_iters > 0:
++        clamped_steps = min(steps_done, params.num_iters)
++        progress = f"{clamped_steps}/{params.num_iters} ({100.0 * clamped_steps / params.num_iters:.1f}%)"
++        if steps_per_sec and steps_per_sec > 0 and steps_done < params.num_iters:
++            eta_seconds = (params.num_iters - steps_done) / steps_per_sec
++    else:
++        progress = f"{steps_done} steps"
++    return progress, elapsed, steps_per_sec, format_duration(eta_seconds)
++
++
+ def compute_fbank_loss(
+     params: AttributeDict,
+     model: Union[nn.Module, DDP],
+@@ -535,6 +596,129 @@ def train_one_epoch(
+ 
+     saved_bad_model = False
+ 
++    def _log_bad_batch(batch, tokens, features, features_lens, loss=None):
++        if not params.debug_nonfinite:
++            return
++        try:
++            token_lens = [len(t) for t in tokens]
++        except Exception:
++            token_lens = []
++        try:
++            feature_min = float(features.min().detach().cpu())
++            feature_max = float(features.max().detach().cpu())
++            feature_mean = float(features.mean().detach().cpu())
++            feature_std = float(features.std().detach().cpu())
++            feature_isfinite = bool(torch.isfinite(features).all().item())
++        except Exception:
++            feature_min = feature_max = feature_mean = feature_std = float("nan")
++            feature_isfinite = False
++        try:
++            lens_min = int(features_lens.min().item())
++            lens_max = int(features_lens.max().item())
++        except Exception:
++            lens_min = lens_max = -1
++        loss_value = None
++        loss_isfinite = None
++        if loss is not None:
++            try:
++                loss_value = float(loss.detach().cpu())
++                loss_isfinite = math.isfinite(loss_value)
++            except Exception:
++                loss_value = None
++                loss_isfinite = None
++        logging.warning(
++            "Bad batch diagnostics: batch_idx=%s global_batch_idx=%s batch_size=%s "
++            "feature_isfinite=%s feature_min=%s feature_max=%s feature_mean=%s feature_std=%s "
++            "features_len_min=%s features_len_max=%s token_len_min=%s token_len_max=%s "
++            "loss=%s loss_isfinite=%s",
++            batch_idx,
++            params.batch_idx_train,
++            len(batch.get("text", [])),
++            feature_isfinite,
++            feature_min,
++            feature_max,
++            feature_mean,
++            feature_std,
++            lens_min,
++            lens_max,
++            min(token_lens) if token_lens else None,
++            max(token_lens) if token_lens else None,
++            loss_value,
++            loss_isfinite,
++        )
++        texts = batch.get("text", [])
++        speakers = batch.get("speakers", [])
++        cuts = batch.get("cut", [])
++        for i in range(min(4, len(texts))):
++            cut_id = None
++            if i < len(cuts):
++                try:
++                    cut_id = cuts[i].id
++                except Exception:
++                    cut_id = None
++            logging.warning(
++                "Bad batch item %s: speaker=%s cut_id=%s text=%r",
++                i,
++                speakers[i] if i < len(speakers) else None,
++                cut_id,
++                texts[i],
++            )
++
++    def _log_nonfinite_grads(model):
++        if not params.debug_nonfinite:
++            return
++        bad = []
++        checked = 0
++        for name, p in model.named_parameters():
++            if p.grad is None:
++                continue
++            checked += 1
++            if not torch.isfinite(p.grad).all():
++                try:
++                    grad_detached = p.grad.detach()
++                    grad_abs_max = float(
++                        torch.nan_to_num(
++                            grad_detached,
++                            nan=0.0,
++                            posinf=0.0,
++                            neginf=0.0,
++                        )
++                        .abs()
++                        .max()
++                        .cpu()
++                    )
++                    grad_nan = int(torch.isnan(grad_detached).sum().item())
++                    grad_posinf = int(torch.isposinf(grad_detached).sum().item())
++                    grad_neginf = int(torch.isneginf(grad_detached).sum().item())
++                except Exception:
++                    grad_abs_max = None
++                    grad_nan = None
++                    grad_posinf = None
++                    grad_neginf = None
++                bad.append(
++                    (
++                        name,
++                        tuple(p.grad.shape),
++                        grad_abs_max,
++                        grad_nan,
++                        grad_posinf,
++                        grad_neginf,
++                    )
++                )
++                if len(bad) >= 12:
++                    break
++        logging.warning("Non-finite gradient parameters detected: checked=%s bad=%s", checked, len(bad))
++        for name, shape, grad_abs_max, grad_nan, grad_posinf, grad_neginf in bad:
++            logging.warning(
++                "Bad grad param: %s shape=%s abs_max=%s nan=%s posinf=%s neginf=%s",
++                name,
++                shape,
++                grad_abs_max,
++                grad_nan,
++                grad_posinf,
++                grad_neginf,
++            )
++
+     def save_bad_model(suffix: str = ""):
+         save_checkpoint(
+             filename=params.exp_dir / f"bad-model{suffix}-{rank}.pt",
+@@ -575,6 +759,14 @@ def train_one_epoch(
+                 f"Epoch {params.cur_epoch}, global_batch_idx: {params.batch_idx_train},"
+                 f" validation: {valid_info}"
+             )
++            progress, elapsed, steps_per_sec, eta_text = progress_stats(params)
++            logging.info(
++                "Progress: %s, elapsed=%s, speed=%s steps/s, eta=%s",
++                progress,
++                format_duration(elapsed),
++                f"{steps_per_sec:.3f}" if steps_per_sec else "unknown",
++                eta_text,
++            )
+             logging.info(
+                 f"Maximum memory allocated so far is "
+                 f"{torch.cuda.max_memory_allocated() // 1000000}MB"
+@@ -597,19 +789,40 @@ def train_one_epoch(
+         )
+ 
+         try:
+-            with torch_autocast(dtype=torch.float16, enabled=params.use_fp16):
+-                loss, loss_info = compute_fbank_loss(
+-                    params=params,
+-                    model=model,
+-                    features=features,
+-                    features_lens=features_lens,
+-                    tokens=tokens,
+-                    is_training=True,
+-                )
++            anomaly_context = (
++                torch.autograd.detect_anomaly() if params.debug_nonfinite else nullcontext()
++            )
++            with anomaly_context:
++                with torch_autocast(dtype=torch.float16, enabled=params.use_fp16):
++                    loss, loss_info = compute_fbank_loss(
++                        params=params,
++                        model=model,
++                        features=features,
++                        features_lens=features_lens,
++                        tokens=tokens,
++                        is_training=True,
++                    )
++
++                if not torch.isfinite(loss):
++                    _log_bad_batch(batch, tokens, features, features_lens, loss=loss)
++                    raise RuntimeError(f"Non-finite loss before backward: {loss.detach().cpu().item()}")
+ 
+-            tot_loss = (tot_loss * (1 - 1 / params.reset_interval)) + loss_info
++                tot_loss = (tot_loss * (1 - 1 / params.reset_interval)) + loss_info
+ 
+-            scaler.scale(loss).backward()
++                if params.debug_nonfinite:
++                    scaler.scale(loss).backward()
++                else:
++                    scaler.scale(loss).backward()
++
++            grads_finite = True
++            for p in model.parameters():
++                if p.grad is not None and not torch.isfinite(p.grad).all():
++                    grads_finite = False
++                    break
++            if not grads_finite:
++                _log_bad_batch(batch, tokens, features, features_lens, loss=loss)
++                _log_nonfinite_grads(model)
++                raise RuntimeError("Non-finite gradients detected before optimizer step")
+ 
+             scheduler.step_batch(params.batch_idx_train)
+             # Use the number of hours of speech to adjust the learning rate
+@@ -625,6 +838,19 @@ def train_one_epoch(
+             optimizer.zero_grad()
+         except Exception as e:
+             logging.info(f"Caught exception : {e}.")
++            optimizer.zero_grad()
++            error_text = str(e).lower()
++            if params.skip_bad_batches and "not finite" in error_text:
++                _log_bad_batch(batch, tokens, features, features_lens, loss=loss if "loss" in locals() else None)
++                _log_nonfinite_grads(model)
++                if not saved_bad_model:
++                    save_bad_model(suffix="-first-nonfinite")
++                    saved_bad_model = True
++                logging.warning(
++                    "Skipping batch due to non-finite optimizer step failure: %s",
++                    e,
++                )
++                continue
+             save_bad_model()
+             raise
+ 
+@@ -646,6 +872,15 @@ def train_one_epoch(
+             params.batch_idx_train > 0
+             and params.batch_idx_train % params.save_every_n == 0
+         ):
++            progress, elapsed, steps_per_sec, eta_text = progress_stats(params)
++            logging.info(
++                "Saving checkpoint at step %s. Progress=%s, elapsed=%s, speed=%s steps/s, eta=%s",
++                params.batch_idx_train,
++                progress,
++                format_duration(elapsed),
++                f"{steps_per_sec:.3f}" if steps_per_sec else "unknown",
++                eta_text,
++            )
+             save_checkpoint_with_global_batch_idx(
+                 out_dir=params.exp_dir,
+                 global_batch_idx=params.batch_idx_train,
+@@ -689,6 +924,7 @@ def train_one_epoch(
+         if params.batch_idx_train % params.log_interval == 0:
+             cur_lr = max(scheduler.get_last_lr())
+             cur_grad_scale = scaler._scale.item() if params.use_fp16 else 1.0
++            progress, elapsed, steps_per_sec, eta_text = progress_stats(params)
+ 
+             logging.info(
+                 f"Epoch {params.cur_epoch}, batch {batch_idx}, "
+@@ -696,6 +932,10 @@ def train_one_epoch(
+                 f"batch size: {batch_size}, "
+                 f"loss[{loss_info}], tot_loss[{tot_loss}], "
+                 f"cur_lr: {cur_lr:.2e}, "
++                f"progress: {progress}, "
++                f"elapsed: {format_duration(elapsed)}, "
++                f"speed: {f'{steps_per_sec:.3f}' if steps_per_sec else 'unknown'} steps/s, "
++                f"eta: {eta_text}"
+                 + (f"grad_scale: {scaler._scale.item()}" if params.use_fp16 else "")
+             )
+ 
+@@ -949,7 +1189,7 @@ def run(rank, world_size, args):
+             include_names=True,
+         ),
+         lr=params.base_lr,  # should have no effect
+-        clipping_scale=2.0,
++        clipping_scale=params.clipping_scale,
+     )
+ 
+     assert params.lr_hours >= 0
+@@ -1103,7 +1343,17 @@ def run(rank, world_size, args):
+                 best_valid_filename = params.exp_dir / "best-valid-loss.pt"
+                 copyfile(src=filename, dst=best_valid_filename)
+ 
+-    logging.info("Done!")
++    progress, elapsed, steps_per_sec, eta_text = progress_stats(params)
++    logging.info(
++        "Done! Final progress=%s, elapsed=%s, average_speed=%s steps/s, best_train_loss=%.6f (epoch %s), best_valid_loss=%.6f (epoch %s)",
++        progress,
++        format_duration(elapsed),
++        f"{steps_per_sec:.3f}" if steps_per_sec else "unknown",
++        params.best_train_loss,
++        params.best_train_epoch,
++        params.best_valid_loss,
++        params.best_valid_epoch,
++    )
+ 
+     if world_size > 1:
+         torch.distributed.barrier()
+diff --git a/zipvoice/dataset/datamodule.py b/zipvoice/dataset/datamodule.py
+index 0e9f668..5995cfb 100644
+--- a/zipvoice/dataset/datamodule.py
++++ b/zipvoice/dataset/datamodule.py
+@@ -22,6 +22,7 @@
+ 
+ import argparse
+ import logging
++import os
+ from functools import lru_cache
+ from pathlib import Path
+ from typing import Any, Dict, Optional
+@@ -49,6 +50,12 @@ class _SeedWorkers:
+ SAMPLING_RATE = 24000
+ 
+ 
++def _resolve_num_workers(requested: int) -> int:
++    if os.name == "nt":
++        return 0
++    return requested
++
++
+ class TtsDataModule:
+     """
+     DataModule for tts experiments.
+@@ -203,11 +210,12 @@ class TtsDataModule:
+         seed = torch.randint(0, 100000, ()).item()
+         worker_init_fn = _SeedWorkers(seed)
+ 
++        num_workers = _resolve_num_workers(self.args.num_workers)
+         train_dl = DataLoader(
+             train,
+             sampler=train_sampler,
+             batch_size=None,
+-            num_workers=self.args.num_workers,
++            num_workers=num_workers,
+             persistent_workers=False,
+             worker_init_fn=worker_init_fn,
+         )
+@@ -231,11 +239,12 @@ class TtsDataModule:
+             shuffle=False,
+         )
+         logging.info("About to create valid dataloader")
++        num_workers = _resolve_num_workers(2)
+         dev_dl = DataLoader(
+             validate,
+             sampler=dev_sampler,
+             batch_size=None,
+-            num_workers=2,
++            num_workers=num_workers,
+             persistent_workers=False,
+         )
+ 
+@@ -259,11 +268,12 @@ class TtsDataModule:
+             shuffle=False,
+         )
+         logging.info("About to create test dataloader")
++        num_workers = _resolve_num_workers(self.args.num_workers)
+         test_dl = DataLoader(
+             test,
+             batch_size=None,
+             sampler=test_sampler,
+-            num_workers=self.args.num_workers,
++            num_workers=num_workers,
+         )
+         return test_dl
+ 
+diff --git a/zipvoice/models/modules/scaling.py b/zipvoice/models/modules/scaling.py
+index 580402b..3c1e8e0 100644
+--- a/zipvoice/models/modules/scaling.py
++++ b/zipvoice/models/modules/scaling.py
+@@ -1189,9 +1189,8 @@ class SwooshROnnx(torch.nn.Module):
+ def SwooshLForward(x: Tensor):
+     with torch.amp.autocast("cuda", enabled=False):
+         x = x.to(torch.float32)
+-        x_offset = x - 4.0
+-        log_sum = (1.0 + x_offset.exp()).log().to(x.dtype)
+-        log_sum = torch.where(log_sum == float("inf"), x_offset, log_sum)
++        zero = torch.zeros((), dtype=x.dtype, device=x.device)
++        log_sum = logaddexp(zero, x - 4.0)
+         return log_sum - 0.08 * x - 0.035
+ 
+ 
+@@ -1200,9 +1199,8 @@ def SwooshLForward(x: Tensor):
+ def SwooshRForward(x: Tensor):
+     with torch.amp.autocast("cuda", enabled=False):
+         x = x.to(torch.float32)
+-        x_offset = x - 1.0
+-        log_sum = (1.0 + x_offset.exp()).log().to(x.dtype)
+-        log_sum = torch.where(log_sum == float("inf"), x_offset, log_sum)
++        zero = torch.zeros((), dtype=x.dtype, device=x.device)
++        log_sum = logaddexp(zero, x - 1.0)
+         return log_sum - 0.08 * x - 0.313261687
