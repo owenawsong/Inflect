@@ -33,7 +33,8 @@ import torchaudio.transforms as T
 from torch.utils.data import DataLoader, Dataset
 
 BASE     = Path(__file__).resolve().parent.parent
-CKPT_DIR = BASE / "checkpoints"
+# Use absolute checkpoint dir so it works regardless of where script is placed
+CKPT_DIR = Path("/root/checkpoints")
 DATA_FILE = BASE / "data" / "paralinguistic" / "finetune_dataset.pt"
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -136,39 +137,54 @@ class TrainableKokoro(nn.Module):
         from kokoro import KModel
         self.base = KModel()
 
-        # Extend BERT embedding table with new tag token rows
-        old_emb   = self.base.bert.embeddings.word_embeddings
-        old_vocab = old_vocab_size = old_emb.weight.shape[0]
-        new_ids   = [tid for tid in unique_tag_ids if tid >= old_vocab_size]
-        if new_ids:
-            max_new = max(new_ids) + 1
-            new_emb = nn.Embedding(max_new, old_emb.weight.shape[1])
-            # Copy existing weights
+        # Extend ALL embedding tables that use token IDs:
+        #   1. bert.embeddings.word_embeddings  [vocab, 128]
+        #   2. text_encoder.embedding           [vocab, hidden]
+        def extend_embedding(emb: nn.Embedding, new_size: int) -> nn.Embedding:
+            old_size, dim = emb.weight.shape
+            if new_size <= old_size:
+                return emb
+            new_emb = nn.Embedding(new_size, dim)
             with torch.no_grad():
-                new_emb.weight[:old_vocab_size] = old_emb.weight
-                # Init new rows from mean of existing
-                mean_emb = old_emb.weight.mean(0, keepdim=True)
-                new_emb.weight[old_vocab_size:] = mean_emb.expand(max_new - old_vocab_size, -1)
-            self.base.bert.embeddings.word_embeddings = new_emb
-            print(f"  Extended BERT embedding: {old_vocab_size} -> {max_new} tokens")
+                new_emb.weight[:old_size] = emb.weight
+                mean_w = emb.weight.mean(0, keepdim=True)
+                new_emb.weight[old_size:] = mean_w.expand(new_size - old_size, -1)
+            return new_emb
+
+        max_new = max(unique_tag_ids) + 1  # e.g. 229
+
+        old_bert_emb = self.base.bert.embeddings.word_embeddings
+        self.base.bert.embeddings.word_embeddings = extend_embedding(old_bert_emb, max_new)
+        print(f"  Extended BERT word_embeddings: {old_bert_emb.weight.shape[0]} -> {max_new}")
+
+        old_te_emb = self.base.text_encoder.embedding
+        self.base.text_encoder.embedding = extend_embedding(old_te_emb, max_new)
+        print(f"  Extended TextEncoder embedding: {old_te_emb.weight.shape[0]} -> {max_new}")
 
         self.tag_tokens = tag_tokens
 
-        # What to train: only tag embeddings + decoder + predictor
-        # Freeze everything else
-        for name, param in self.base.named_parameters():
+        # Freeze everything first
+        for param in self.base.parameters():
             param.requires_grad = False
 
-        # Unfreeze: new embedding rows
+        # Unfreeze 1: new tag token embedding rows only (not all 178 original rows)
+        # We do this by registering a gradient hook that zeros out gradients for old rows
         self.base.bert.embeddings.word_embeddings.weight.requires_grad = True
+        self.base.text_encoder.embedding.weight.requires_grad = True
+        self._old_vocab_size = 178   # mask old rows in optimizer step
 
-        # Unfreeze: decoder (generates the actual audio)
-        for param in self.base.decoder.parameters():
-            param.requires_grad = True
-
-        # Unfreeze: prosody predictor (controls duration/pitch of events)
+        # Unfreeze 2: full predictor (duration + F0 + noise)
+        # F0Ntrain is critical: [laughs]=irregular F0, [whispers]=aperiodic/no F0,
+        # [crying]=high-pitched F0, [sighs]=breathy noise — all need different F0/N patterns
         for param in self.base.predictor.parameters():
             param.requires_grad = True
+
+        # Unfreeze 3: decoder — last 6 layers for more capacity to learn new sounds
+        # More layers = model can learn the texture of laughing/crying/whispering
+        decoder_children = list(self.base.decoder.named_children())
+        for name, child in decoder_children[-6:]:
+            for param in child.parameters():
+                param.requires_grad = True
 
         n_train = sum(p.numel() for p in self.parameters() if p.requires_grad)
         n_total = sum(p.numel() for p in self.parameters())
@@ -227,13 +243,17 @@ class TrainableKokoro(nn.Module):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data",    type=str, default=str(DATA_FILE))
-    parser.add_argument("--epochs",  type=int, default=80)
-    parser.add_argument("--lr",      type=float, default=2e-5)
-    parser.add_argument("--batch",   type=int, default=1,
-                        help="Batch size (keep 1-2 for variable length audio)")
-    parser.add_argument("--save-every", type=int, default=10)
-    parser.add_argument("--resume",  type=str, default=None)
+    parser.add_argument("--data",       type=str,   default=str(DATA_FILE))
+    parser.add_argument("--epochs",     type=int,   default=80)
+    parser.add_argument("--lr",         type=float, default=2e-5)
+    parser.add_argument("--batch",      type=int,   default=1,
+                        help="Batch size (keep 1 for variable length audio)")
+    parser.add_argument("--grad-accum", type=int,   default=8,
+                        help="Gradient accumulation steps (simulates larger batch)")
+    parser.add_argument("--fp16",       action="store_true",
+                        help="Use mixed precision (fp16) — halves VRAM, use on Vast.ai")
+    parser.add_argument("--save-every", type=int,   default=10)
+    parser.add_argument("--resume",     type=str,   default=None)
     args = parser.parse_args()
 
     print(f"Device: {DEVICE}")
@@ -269,10 +289,19 @@ def main():
         [p for p in model.parameters() if p.requires_grad],
         lr=args.lr, weight_decay=1e-4
     )
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=args.epochs, eta_min=args.lr * 0.1
-    )
+    # Warmup for first 5 epochs, then cosine decay
+    def lr_lambda(epoch):
+        warmup = 5
+        if epoch < warmup:
+            return (epoch + 1) / warmup
+        progress = (epoch - warmup) / max(args.epochs - warmup, 1)
+        return 0.1 + 0.9 * 0.5 * (1 + torch.cos(torch.tensor(progress * 3.14159)).item())
+    scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda)
+    scaler    = torch.cuda.amp.GradScaler(enabled=args.fp16)
     stft_loss = STFTLoss().to(DEVICE)
+
+    if args.fp16:
+        print("  Mixed precision (fp16) enabled")
 
     mel_tf = T.MelSpectrogram(
         sample_rate=24_000, n_fft=1024, hop_length=256,
@@ -284,17 +313,22 @@ def main():
 
     print(f"\nTraining for {args.epochs} epochs, lr={args.lr}\n")
 
+    import time
+
     for epoch in range(start_epoch, args.epochs):
         model.train()
         epoch_loss = 0.0
         n_batches  = 0
+        t0         = time.time()
 
-        for batch in loader:
+        optimizer.zero_grad()
+        accum_loss = torch.tensor(0.0, device=DEVICE)
+
+        for bi, batch in enumerate(loader):
             token_ids  = batch["token_ids"]   # [B, T]
             target_mel = batch["target_mel"]  # [B, 80, F]
             styles     = batch["styles"]      # [B, 256]
 
-            optimizer.zero_grad()
             batch_loss = torch.tensor(0.0, device=DEVICE)
 
             for b in range(token_ids.shape[0]):
@@ -309,39 +343,58 @@ def main():
                 tgt   = target_mel[b]  # [80, F]
 
                 try:
-                    pred_audio = model(ids, style)    # [samples]
+                    with torch.cuda.amp.autocast(enabled=args.fp16):
+                        pred_audio = model(ids, style)    # [samples]
+                        pred_mel   = torch.log(
+                            mel_tf(pred_audio.unsqueeze(0)) + 1e-5
+                        ).squeeze(0)  # [80, T_pred]
+                        tgt_mel    = tgt.to(DEVICE)
+                        min_f      = min(pred_mel.shape[1], tgt_mel.shape[1])
+                        # L1 loss for content accuracy
+                        mel_l1     = F.l1_loss(pred_mel[:, :min_f], tgt_mel[:, :min_f])
+                        # L2 loss for smoothness (penalizes large deviations harder)
+                        mel_l2     = F.mse_loss(pred_mel[:, :min_f], tgt_mel[:, :min_f])
+                        # Combo: L1 for robustness, L2 for smoothness
+                        clip_loss  = mel_l1 * 0.8 + mel_l2 * 0.2
                 except Exception as e:
                     print(f"  [skip] forward error: {e}")
                     continue
 
-                # Convert target mel back to approximate audio for STFT loss
-                # (use the mel target directly for L1 loss)
-                pred_mel = torch.log(
-                    mel_tf(pred_audio.unsqueeze(0)) + 1e-5
-                ).squeeze(0)  # [80, T_pred]
+                batch_loss = batch_loss + clip_loss
 
-                # Trim to same length for mel L1
-                tgt_mel  = tgt.to(DEVICE)
-                min_f    = min(pred_mel.shape[1], tgt_mel.shape[1])
-                mel_l1   = F.l1_loss(pred_mel[:, :min_f], tgt_mel[:, :min_f])
-
-                batch_loss = batch_loss + mel_l1
-
+            # Gradient accumulation
             if batch_loss.requires_grad:
-                batch_loss.backward()
+                scaler.scale(batch_loss / args.grad_accum).backward()
+                accum_loss = accum_loss + batch_loss.detach()
+
+            if (bi + 1) % args.grad_accum == 0 or (bi + 1) == len(loader):
+                scaler.unscale_(optimizer)
                 torch.nn.utils.clip_grad_norm_(
                     [p for p in model.parameters() if p.requires_grad], 1.0)
-                optimizer.step()
+                scaler.step(optimizer)
+                scaler.update()
+                optimizer.zero_grad()
 
             epoch_loss += batch_loss.item()
             n_batches  += 1
 
+            if (bi + 1) % 20 == 0:
+                elapsed  = time.time() - t0
+                per_clip = elapsed / (bi + 1)
+                eta      = per_clip * (len(loader) - bi - 1)
+                print(f"    [{bi+1:3d}/{len(loader)}] "
+                      f"loss={batch_loss.item():.4f}  "
+                      f"eta={eta/60:.1f}min", flush=True)
+
         scheduler.step()
         avg_loss = epoch_loss / max(n_batches, 1)
+        elapsed  = time.time() - t0
 
         print(f"  Epoch {epoch+1:04d}/{args.epochs}  loss={avg_loss:.4f}  "
-              f"lr={scheduler.get_last_lr()[0]:.2e}")
+              f"lr={scheduler.get_last_lr()[0]:.2e}  "
+              f"time={elapsed/60:.1f}min", flush=True)
 
+        # Save periodic checkpoint
         if (epoch + 1) % args.save_every == 0:
             ckpt_path = CKPT_DIR / f"phase3_epoch_{epoch+1:04d}.pt"
             torch.save({
@@ -352,18 +405,28 @@ def main():
             }, str(ckpt_path))
             print(f"  Saved: {ckpt_path}")
 
-            if avg_loss < best_loss:
-                best_loss = avg_loss
-                torch.save({
-                    "model":      model.state_dict(),
-                    "epoch":      epoch + 1,
-                    "loss":       avg_loss,
-                    "tag_tokens": tag_tokens,
-                }, str(CKPT_DIR / "phase3_best.pt"))
-                print(f"  ** New best: {best_loss:.4f}")
+        # Always track best checkpoint (every epoch, not just save_every)
+        if avg_loss < best_loss:
+            best_loss = avg_loss
+            torch.save({
+                "model":      model.state_dict(),
+                "epoch":      epoch + 1,
+                "loss":       avg_loss,
+                "tag_tokens": tag_tokens,
+            }, str(CKPT_DIR / "phase3_best.pt"))
+            print(f"  ** New best: {best_loss:.4f}")
 
     print(f"\nDone. Best loss: {best_loss:.4f}")
     print(f"Best checkpoint: {CKPT_DIR / 'phase3_best.pt'}")
+
+    # Auto-shutdown instance when training completes (safe on Vast.ai)
+    import os, subprocess
+    print("\nTraining complete. Shutting down instance in 60 seconds...")
+    print("Download your checkpoint NOW if you need to cancel shutdown:")
+    print(f"  scp -P <PORT> root@<IP>:/root/checkpoints/phase3_best.pt .")
+    print(f"  Best checkpoint: {CKPT_DIR / 'phase3_best.pt'}")
+    import time as _time; _time.sleep(60)
+    subprocess.run(["shutdown", "-h", "now"])
 
 
 if __name__ == "__main__":

@@ -1,44 +1,120 @@
 # Project Structure
 
-## Core code
+This file describes the real working layout of the repo as of 2026-04-13.
 
-- `inflect/`
-  - Inflect project code
-- `scripts/`
-  - operational scripts for generation, benchmarking, fine-tuning, and serving compare pages
-- `ZipVoice-official/`
-  - upstream ZipVoice training/inference code used for baseline and fine-tuning
-- `third_party/`
-  - vendored external code such as LuxTTS / LinaCodec integrations
+## Top level
 
-## Data
+- `README.md`
+  - public-facing project overview
+- `LICENSE`
+  - Apache 2.0 for repo code/docs unless otherwise noted
+- `PUBLISHING.md`
+  - GitHub and Hugging Face release guidance
+- `PROJECT_STRUCTURE.md`
+  - this file
 
-- `reference_voices/`
-  - active reference voice set for cloning
-- `reference_voices_backup/`
-  - backup copy of reference voices
-- `outputs/`
-  - generated artifacts, datasets, benches, debug audio, and training runs
+## Main source folders
+
+### `scripts/`
+
+Operational scripts for the active workflows:
+
+- VoxCPM HF Space generation
+- VoxCPM local generation on rental GPUs
+- corpus and generation-plan building
+- runtime benchmarks and comparison servers
+- teacher fine-tune preparation and launch
+- dataset upload and release prep
+
+Use [scripts/README.md](C:/users/owen/Inflect-New/scripts/README.md) as the real entrypoint.
+
+### `inflect/`
+
+Inflect-specific model and experiment code:
+
+- `enhancer/`
+  - audio enhancement pipeline
+- `para_module/`
+  - paralinguistic sound generation experiments
+- `data/`
+  - dataset utilities, extraction helpers, tag definitions
+
+Use [inflect/README.md](C:/users/owen/Inflect-New/inflect/README.md).
+
+### `voice-encoder/`
+
+Separate research area for:
+
+- reference conditioning
+- cloning support
+- paralinguistic data prep
+- adapter training experiments
+
+Use [voice-encoder/README.md](C:/users/owen/Inflect-New/voice-encoder/README.md).
+
+### `CLAUDE_READ/`
+
+Living project notes:
+
+- `claude.md`
+  - current truth and decisions
+- `plan.md`
+  - roadmap
+- `todo.md`
+  - execution checklist
+- `lux_*`
+  - Lux investigation notes
+- `zipvoice_experiment_spec.md`
+  - benchmark design
+
+## Local-only folders
+
+These are intentionally not part of the publishable GitHub payload.
+
+### `outputs/`
+
+Generated artifacts:
+
+- datasets
+- corpora
+- benches
+- fine-tune runs
+- debug audio
+
+### `reference_voices/`
+
+Reference voice prompts used for cloning and VoxCPM generation.
+
+### `ZipVoice-official/`
+
+Local upstream checkout of official ZipVoice used for:
+
+- baseline inference
+- training recipes
+- local teacher fine-tuning
+
+### `third_party/`
+
+Other local external repos and integrations such as LuxTTS/LinaCodec experiments.
 
 ## Important current files
 
-- `outputs/corpora/voxcpm_texts_20000_v2.csv`
-  - current `v2` text pool
-- `outputs/corpora/voxcpm_generation_plan_v2_60k.csv`
-  - current `60k` generation plan
-- `scripts/generate_voxcpm_dataset.py`
-  - HF Space generator
-- `scripts/generate_voxcpm_dataset_local.py`
-  - local rental-GPU generator
-- `scripts/run_inflect_teacher_finetune.py`
-  - fine-tuning launcher
+- [run_inflect_teacher_finetune.py](C:/users/owen/Inflect-New/scripts/run_inflect_teacher_finetune.py)
+  - main launcher for ZipVoice teacher fine-tuning
+- [generate_voxcpm_dataset.py](C:/users/owen/Inflect-New/scripts/generate_voxcpm_dataset.py)
+  - HF Space dataset generation
+- [generate_voxcpm_dataset_local.py](C:/users/owen/Inflect-New/scripts/generate_voxcpm_dataset_local.py)
+  - local/rental-GPU dataset generation
+- [build_voxcpm_text_corpus_v2.py](C:/users/owen/Inflect-New/scripts/build_voxcpm_text_corpus_v2.py)
+  - current higher-quality English corpus builder
+- [build_voxcpm_generation_plan.py](C:/users/owen/Inflect-New/scripts/build_voxcpm_generation_plan.py)
+  - current balanced 60k plan builder
+- [zipvoice-local-fixes.patch](C:/users/owen/Inflect-New/patches/zipvoice-local-fixes.patch)
+  - required local patch set for current teacher fine-tuning
 
-## Practical rule
+## What Not To Assume
 
-If a folder name is ambiguous, prefer checking:
-
-- `outputs/README.md`
-- `outputs/voxcpm_dataset/INDEX.md`
-- `outputs/inflect_finetune/README.md`
-
-before opening random metadata files.
+- This repo is not a single clean packaged library yet.
+- Some subareas are active, some are parked.
+- Runtime benchmarking is much more mature than the paralinguistic branch.
+- The public GitHub repo should contain source and docs, not giant local artifacts.

@@ -1,6 +1,7 @@
 data/mels/
 data/raw/
-data/manifest.csv
+data/*manifest*.csv
+data/paralinguistic_paste_list.txt
 checkpoints/
 logs/
 __pycache__/

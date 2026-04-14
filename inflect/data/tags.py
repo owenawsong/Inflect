@@ -83,6 +83,41 @@ TAG_TO_ID = {tag: i for i, tag in enumerate(TAGS)}
 ID_TO_TAG = {i: tag for i, tag in enumerate(TAGS)}
 NUM_TAGS = len(TAGS)
 
+# Tags that are plausible standalone nonverbal events for the Para Module.
+# Everything else should be treated as delivery/style control or handled later.
+SOUND_EVENT_TAGS = {
+    "laughs",
+    "laughs_hard",
+    "chuckles",
+    "giggles",
+    "wheezing",
+    "snorts",
+    "sighs",
+    "exhales",
+    "inhales",
+    "gasps",
+    "clears_throat",
+}
+
+# Tags that currently look like speaking style / emotion labels rather than
+# isolated paralinguistic sound events.
+STYLE_EVENT_TAGS = {
+    "crying",
+    "muttering",
+    "whispers",
+    "excited",
+    "angry",
+    "sad",
+    "curious",
+    "dramatically",
+    "impressed",
+    "sarcastic",
+    "surprised",
+    "delighted",
+    "warmly",
+    "thoughtful",
+}
+
 
 def normalize_tag(raw_tag: str) -> str | None:
     """Normalize a raw tag string from the manifest to canonical form.

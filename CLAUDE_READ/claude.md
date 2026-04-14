@@ -1,131 +1,138 @@
 # Claude's Head — Inflect Project Notes
 
-This file is my personal reference. I read this when I lose track of context.
-Last updated: 2026-04-06
+Last updated: 2026-04-13
 
----
+## Current Truth
 
-## CRITICAL: What We're Building
+Inflect is currently a ZipVoice-centered project.
 
-Inflect = Pocket TTS (100M, frozen) + Paralinguistic Module (23M) + Emotion Steering + Voice Adapter
+That means:
 
-We are NOT fine-tuning Pocket TTS weights. We work AROUND them in Mimi latent space.
+- ZipVoice is the backbone
+- LuxTTS is a reference and benchmark source
+- VoxCPM2 is the main synthetic foundation dataset
+- Inflect-Enhance is downstream of the backbone, not the other way around
 
----
+The working runtime default is:
 
-## What We ABANDONED
+- `zipvoice_distill`
+- `4` steps
+- guidance `3.0`
+- direct transcripts
+- Lux/LinaCodec-inspired `48k` decoder path
+- Lux solver
+- `t_shift = 0.9`
+- target RMS `0.01`
+- no copied Lux speed multiplier
+- no default prompt cap
 
-**Kokoro fine-tuning is DEAD. Do not suggest reviving it.**
-- HiFiGAN vocoder = trained on clean speech only = buzzes on paralinguistic mels
-- Even 24.3% trainable params produced garbage audio
-- The architecture is fundamentally wrong for this use case
+## What Changed Recently
 
----
+### 1. Lux investigation was narrowed correctly
 
-## Owen's Preferences (Critical)
+Lux is useful as a source of concrete ideas, mainly:
 
-From feedback_style.md:
-- Direct, no filler, no fluff
-- Edit files directly
-- Fast-paced
-- Owen is a student/dev in Canada, RTX 3060 12GB locally, ~$30 CAD total GPU budget
+- solver update
+- 48k decoder path
+- wrapper/inference simplifications
 
-What Owen does NOT want:
-- Being asked questions when I should just decide
-- Overexplaining obvious things
-- Slow, robotic-sounding TTS (he thinks Kokoro sounds like a robot)
-- Options when he wants a recommendation
+But it is not the project base.
 
-What Owen DOES want:
-- Pocket TTS (sounds way more human than Kokoro)
-- Real paralinguistic sounds (actual laughing, not pitch tricks)
-- Something that can go viral on X, Reddit, GitHub, HuggingFace
-- Model under 200M params total
-- Under $30 CAD total GPU cost
+### 2. VoxCPM dataset work matured
 
----
+Current planning assets:
 
-## Key Technical Facts
+- `outputs/corpora/voxcpm_texts_20000_v2.csv`
+- `outputs/corpora/voxcpm_generation_plan_v2_60k.csv`
 
-### Pocket TTS
-- 100M params, Mimi VAE codec, FlowLM (flow matching, not diffusion)
-- Mimi latent: 32-dim continuous, 12.5 Hz, 24kHz audio
-- Voice cloning: `tts_model.get_state_for_audio_prompt("voice.wav")`
-- NO public training code — but EmoShift injection into output latents WORKS (confirmed on Reddit)
-- License: CC-BY-4.0
+Current active HF Space dataset:
 
-### EmoShift (confirmed method for Pocket TTS)
-- A Reddit user (r/LocalLLaMA post) fine-tuned Pocket TTS emotion using this
-- Method: small steering vector per emotion, injected into model output
-- Used CREMA-D dataset for training
-- Their result: emotions "sound the same" (not good) — we need to do better
-- They offered to share training code — worth reaching out if we need it
+- `outputs/voxcpm_dataset/20260411_large_text_v1`
 
-### Our Existing Assets
-- voice-encoder/checkpoints/1d_ref_epoch_0500.pt = best GE2E encoder (11.3M params)
-- emotion-deltas/deltas.pt and deltas_v2.pt = old Kokoro emotion steering (may be useful as reference)
-- voice-encoder/data/ = 1070 ElevenLabs clips across 7 voices with paralinguistic tags
-- voice-encoder/data/manifest.csv = the data index
-- 7 voices: Amy, Arabella, Austin, Bradford, Charlotte, Hope, James
+Current active size when this note was updated:
 
-### Training Data
-- 1070 clips, 7 voices (ElevenLabs)
-- Each clip: has a [tag] in text, audio contains that sound
-- Tags include: [laughs], [sighs], [whispers], [gasps], [crying], etc.
-- Already phonemized (from old Kokoro work) but we don't need phonemes for Pocket TTS
+- `21,543` clips
+- `56` voices
 
----
+### 3. Teacher fine-tuning was unblocked
 
-## Decisions Made (Do Not Re-Debate)
+The crash was not caused by a bad early dataset batch.
 
-1. **Base model = Pocket TTS.** Not Kokoro. Not Dia. Not Orpheus. Pocket TTS.
-2. **Work in Mimi latent space** for all additions (Para Module outputs Mimi latents).
-3. **No direct Pocket TTS weight modification** (no training code available).
-4. **Tag syntax:** `[event_tags]` for sounds, `[emotion: X]` for global emotion, `<modifier>text</modifier>` for prosody spans (later).
-5. **Breathing patterns = deprioritized** (might sound artificial).
-6. **Speaking styles = just emotion steering** (not a separate feature).
-7. **Background ambience = deprioritize**.
-8. **Gender/age shifting = just use different voices**.
-9. **Pause/silence = MUST HAVE**, not nice-to-have.
+The real cause was:
 
----
+- non-`k2` fallback Swoosh activation in ZipVoice
+- raw exponential form overflowed
+- gradients became non-finite on the first training step
 
-## Current Project State
+The local fix now lives in:
 
-- [x] Old Kokoro fine-tuning code exists but is abandoned
-- [x] GE2E voice encoder trained (1d_ref_epoch_0500.pt = best)
-- [x] 1070 ElevenLabs clips collected
-- [x] Old emotion deltas computed (for Kokoro, not Pocket TTS)
-- [ ] Pocket TTS pipeline not yet set up
-- [ ] Para Module not written
-- [ ] SenseVoice + SeedVC data pipeline not built
-- [ ] Emotion steering not implemented for Pocket TTS
-- [ ] Voice Style Adapter not written
-- [ ] Auto-tagger not written
+- `patches/zipvoice-local-fixes.patch`
 
-**Next steps: see todo.md**
+And the current training launcher is:
 
----
+- `scripts/run_inflect_teacher_finetune.py`
 
-## File Locations
+## Project Priorities
 
-```
-/c/Users/Owen/Inflect-New/            ← Main repo
-/c/Users/Owen/Inflect-New/voice-encoder/data/  ← 1070 training clips
-/c/Users/Owen/Inflect-New/voice-encoder/checkpoints/  ← GE2E checkpoints
-/c/Users/Owen/Inflect-New/CLAUDE_READ/  ← This folder (my reference)
-```
+Priority order right now:
 
-GitHub: https://github.com/owenawsong/Inflect
+1. cloning accuracy
+2. consistency
+3. overall quality
+4. long-form stability
+5. emotional richness
 
----
+Emotional richness matters, but it does not outrank cloning accuracy or stability yet.
 
-## Things To Remember
+## Dataset Strategy
 
-- Always check todo.md at the start of a new session
-- Update this file and todo.md after major decisions or completions
-- The Para Module must output Mimi latents (32-dim × T frames, 12.5 Hz) — not mel spectrograms, not raw audio
-- SeedVC is the voice conversion tool for the data pipeline
-- SenseVoice is the ASR tool for detecting paralinguistic timestamps
-- DPO training is better than SFT for paralinguistic quality (proven in SynParaSpeech paper)
-- The training must happen on cloud GPU (Owen has ~$24 remaining of $30 budget)
+### Foundation dataset
+
+Use VoxCPM synthetic data first.
+
+Why:
+
+- strong voice similarity behavior
+- strong stability
+- good clean synthetic supervision
+- useful for zero-shot cloning behavior
+
+### Expressive dataset later
+
+Add expressive data after the foundation pass works.
+
+Current best candidate:
+
+- Expresso
+
+Reason:
+
+- better style/prosody supervision than small acted-emotion corpora
+- more relevant to expressive TTS than CREMA-D as a first expressive add-on
+
+## Hard Rules
+
+- do not make LuxTTS the base by convenience
+- do not train Inflect-Enhance before the backbone is settled
+- do not claim the repo is release-ready when it is still a research workspace
+- do not call the dataset openly licensed unless its provenance supports that claim
+- do not overfit the roadmap to one impressive sample
+
+## Current Publish Direction
+
+GitHub should become:
+
+- source
+- scripts
+- docs
+- patch files
+
+Hugging Face should hold:
+
+- the VoxCPM synthetic dataset snapshots
+
+The public dataset should use a cautious release posture:
+
+- clear card
+- clear provenance note
+- no fake `apache-2.0` dataset claim

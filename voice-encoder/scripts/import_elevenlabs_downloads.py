@@ -1,40 +1,27 @@
 """
-Imports manually downloaded ElevenLabs clips and builds the training manifest.
+Imports manually downloaded ElevenLabs/Poe clips and builds the training manifest.
 
-ElevenLabs names downloaded files after the first ~50 chars of the text,
-e.g. "I can't believe you actually said that. [laughs] That's the funni.mp3"
-This script fuzzy-matches those filenames back to the training corpus texts.
+Two modes:
 
-Folder structure expected:
-    data/paralinguistic/downloads/
-        rachel/
-            I can't believe you actually said that. [laughs] That's t....mp3
-            Wait, you tripped over your own feet [laughs] In front of....mp3
-            ...
-        josh/
-            ...
-        bella/
-            ...
+1. FUZZY mode (default): matches filenames to training texts by text similarity.
+   ElevenLabs names files after first ~50 chars; Poe uses full text stripped of punctuation.
 
-Output:
-    data/paralinguistic/
-        rachel/   ← renamed + converted to .wav
-            0000_rachel.wav + 0000_rachel.txt
-            ...
-        manifest.csv
+2. INDEXED mode (--indexed): files named voice_01.mp3, voice_02.mp3, ...
+   Maps directly to TEXTS[0], TEXTS[1], ... by number (1-based).
+   Use this for ElevenLabs Projects exports or any manually numbered downloads.
 
 Usage:
-    # Auto-scan data/paralinguistic/downloads/ for all voice subfolders
+    # Fuzzy match a folder of text-named files
+    python import_elevenlabs_downloads.py --folder "C:/Users/Owen/Downloads" --voice rachel
+
+    # Indexed mode: arabella_01.mp3 -> TEXTS[0], arabella_02.mp3 -> TEXTS[1], ...
+    python import_elevenlabs_downloads.py --folder "C:/Users/Owen/Downloads" --voice arabella --indexed
+
+    # Preview without writing anything
+    python import_elevenlabs_downloads.py --folder "..." --voice arabella --indexed --dry-run
+
+    # Auto-scan data/paralinguistic/downloads/ subfolders (fuzzy)
     python import_elevenlabs_downloads.py
-
-    # Specific folder + voice name
-    python import_elevenlabs_downloads.py --folder "C:/Users/Owen/Downloads/rachel_clips" --voice rachel
-
-    # Preview matches without moving/converting anything
-    python import_elevenlabs_downloads.py --dry-run
-
-    # Lower match threshold if some files aren't being matched (default: 0.45)
-    python import_elevenlabs_downloads.py --threshold 0.35
 """
 
 import argparse
@@ -141,16 +128,116 @@ def convert_to_wav(src: Path, dst: Path) -> bool:
 
 # ── Core import logic ─────────────────────────────────────────────────────────
 
+def import_folder_indexed(folder: Path, voice_name: str, texts: list[str],
+                          dry_run: bool) -> list[dict]:
+    """Indexed mode: files named voicename_01.mp3, voicename_02.mp3, ...
+    Maps file N directly to TEXTS[N-1]. Extra files beyond len(texts) are skipped.
+    Missing files (gaps in numbering) are reported.
+    """
+    audio_exts = {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac"}
+    # Only grab files that start with voice_name_ (case-insensitive)
+    prefix = voice_name.lower() + "_"
+    files = sorted([f for f in folder.iterdir()
+                    if f.suffix.lower() in audio_exts
+                    and f.stem.lower().startswith(prefix)])
+
+    if not files:
+        print(f"  [!] No audio files found in {folder} matching prefix '{prefix}'")
+        return []
+
+    # Extract numeric index from filename: voice_01.mp3 -> 1
+    import re as _re
+    def get_index(f: Path) -> int | None:
+        m = _re.search(r'_(\d+)$', f.stem)
+        return int(m.group(1)) if m else None
+
+    indexed = {}
+    for f in files:
+        idx = get_index(f)
+        if idx is not None and 1 <= idx <= len(texts):
+            indexed[idx] = f
+        elif idx is not None and idx > len(texts):
+            print(f"  [skip] {f.name} (index {idx} > {len(texts)} texts)")
+
+    print(f"\n  {len(files)} files found, {len(indexed)} within text range ({len(texts)} texts)")
+
+    out_voice = OUT_DIR / voice_name.lower()
+    if not dry_run:
+        out_voice.mkdir(parents=True, exist_ok=True)
+
+    rows = []
+    missing = []
+    for ti in range(len(texts)):
+        idx = ti + 1  # 1-based
+        if idx not in indexed:
+            missing.append(ti)
+            continue
+
+        f     = indexed[idx]
+        text  = texts[ti]
+        tags  = extract_tags(text)
+        plain = strip_tags(text)
+
+        dst_wav = out_voice / f"{ti:04d}_{voice_name.lower()}.wav"
+        dst_txt = out_voice / f"{ti:04d}_{voice_name.lower()}.txt"
+
+        status = "DRY RUN" if dry_run else "OK"
+        print(f"  [{status}] {f.name:<40} -> {ti:04d}  tags={tags}")
+
+        if not dry_run:
+            ok = convert_to_wav(f, dst_wav)
+            if ok:
+                dst_txt.write_text(text, encoding="utf-8")
+                rows.append({
+                    "audio_path":  str(dst_wav),
+                    "text":        text,
+                    "plain_text":  plain,
+                    "voice":       voice_name.lower(),
+                    "tags":        "|".join(tags),
+                    "match_score": "1.000",
+                })
+        else:
+            rows.append({
+                "audio_path":  str(dst_wav),
+                "text":        text,
+                "plain_text":  plain,
+                "voice":       voice_name.lower(),
+                "tags":        "|".join(tags),
+                "match_score": "1.000",
+            })
+
+    if missing:
+        print(f"\n  Missing indices ({len(missing)}): {missing[:20]}{'...' if len(missing)>20 else ''}")
+        print(f"  These clips have no file — they will be skipped from the manifest.")
+
+    print(f"\n  Imported: {len(rows)}/{len(texts)} for voice '{voice_name}'")
+    return rows
+
+
 def import_folder(folder: Path, voice_name: str, texts: list[str],
-                  threshold: float, dry_run: bool) -> list[dict]:
+                  threshold: float, dry_run: bool, poe_suffix: int | None = None) -> list[dict]:
     """Match all audio files in folder to texts, convert + rename, return manifest rows.
 
     Uses optimal conflict resolution: scores ALL files against ALL texts first,
     then assigns highest-score pairs greedily so music files never steal slots
     from real training clips.
+
+    poe_suffix: if set, only include files ending with ' (N)' in their stem (Poe duplicate suffix).
+                Use 0 for base files (no suffix), 1 for '(1)', etc.
     """
+    import re as _re
     audio_exts = {".mp3", ".wav", ".m4a", ".ogg", ".flac", ".aac"}
-    files = [f for f in folder.iterdir() if f.suffix.lower() in audio_exts]
+    all_files = [f for f in folder.iterdir() if f.suffix.lower() in audio_exts]
+
+    if poe_suffix is not None:
+        def has_suffix(f: Path, n: int) -> bool:
+            if n == 0:
+                return not bool(_re.search(r'\s*\(\d+\)$', f.stem))
+            return bool(_re.search(rf'\s*\({n}\)$', f.stem))
+        files = [f for f in all_files if has_suffix(f, poe_suffix)]
+        print(f"  Filtering to Poe suffix {'(base)' if poe_suffix==0 else f'({poe_suffix})'}: {len(files)}/{len(all_files)} files")
+    else:
+        files = all_files
 
     if not files:
         print(f"  [!] No audio files found in {folder}")
@@ -242,6 +329,10 @@ def main():
                         help=f"Root downloads dir to auto-scan (default: {DL_DIR})")
     parser.add_argument("--threshold", type=float, default=0.45,
                         help="Min fuzzy-match score to accept (0-1, default: 0.45)")
+    parser.add_argument("--indexed",    action="store_true",
+                        help="Use indexed mode: voice_01.mp3 -> TEXTS[0], voice_02.mp3 -> TEXTS[1], ...")
+    parser.add_argument("--poe-suffix", type=int, default=None,
+                        help="Only import Poe files with this Windows duplicate suffix (0=base, 1=(1), 2=(2), ...)")
     parser.add_argument("--dry-run",   action="store_true",
                         help="Show matches without converting or moving files")
     args = parser.parse_args()
@@ -261,7 +352,10 @@ def main():
         # Single folder mode
         folder     = Path(args.folder)
         voice_name = args.voice or folder.name
-        rows       = import_folder(folder, voice_name, TEXTS, args.threshold, args.dry_run)
+        if args.indexed:
+            rows = import_folder_indexed(folder, voice_name, TEXTS, args.dry_run)
+        else:
+            rows = import_folder(folder, voice_name, TEXTS, args.threshold, args.dry_run, args.poe_suffix)
         all_rows.extend(rows)
     else:
         # Auto-scan downloads dir for voice subfolders
