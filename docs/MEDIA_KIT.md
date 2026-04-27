@@ -6,8 +6,9 @@ This folder is the staging area for public-facing launch assets.
 
 | Asset | Status | Notes |
 | --- | --- | --- |
-| Hero wordmark | Placeholder | [`assets/inflect-wordmark.svg`](../assets/inflect-wordmark.svg) |
-| Demo video card | Placeholder | [`assets/demo-video-placeholder.svg`](../assets/demo-video-placeholder.svg) |
+| Hero banner | Current preview | [`assets/inflect-hero.png`](../assets/inflect-hero.png) |
+| Legacy wordmark | Placeholder | [`assets/inflect-wordmark.svg`](../assets/inflect-wordmark.svg) |
+| Demo video card | Current placeholder | [`assets/demo-video-placeholder.svg`](../assets/demo-video-placeholder.svg) |
 | Sample gallery card | Placeholder | [`assets/sample-card-placeholder.svg`](../assets/sample-card-placeholder.svg) |
 | 30-45s demo video | Planned | Voice cloning, emotion, local inference, enhancer. |
 | Audio sample gallery | Planned | Base vs tuned vs enhanced. |
@@ -28,16 +29,16 @@ Suggested arc:
 
 ## Visual Direction
 
-Use a warm editorial style rather than generic futuristic AI visuals.
+Use the current hero banner as the visual direction: warm paper, black ink waveform, muted terracotta accents, editorial audio-research plate.
 
 Direction:
 
-- dark warm background
-- cream text
+- warm off-white background
+- near-black text
 - amber/orange waveform accents
 - restrained motion
 - premium audio-tool feeling
-- no neon sci-fi UI unless the product itself needs it
+- no neon sci-fi UI
 
 ## Sample Gallery Template
 

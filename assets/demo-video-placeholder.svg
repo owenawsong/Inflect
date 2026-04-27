@@ -1,22 +1,22 @@
 <svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
-  <title id="title">Inflect demo video placeholder</title>
-  <desc id="desc">A cinematic placeholder card for the future Inflect product demo video.</desc>
-  <rect width="1280" height="720" rx="36" fill="#11100E"/>
-  <path d="M0 0H1280V720H0V0Z" fill="url(#paint0_linear)"/>
-  <circle cx="1032" cy="122" r="280" fill="#F07F4F" fill-opacity=".20"/>
-  <circle cx="238" cy="626" r="300" fill="#F7C66B" fill-opacity=".14"/>
-  <rect x="72" y="70" width="1136" height="580" rx="36" fill="#FFF8EA" fill-opacity=".06" stroke="#FFF8EA" stroke-opacity=".18"/>
-  <path d="M554 262L770 383L554 504V262Z" fill="#FFF8EA"/>
-  <path d="M165 526C248 402 337 403 430 526C523 649 616 650 709 526C802 403 895 402 988 526C1081 650 1170 649 1253 526" stroke="#F7C66B" stroke-width="12" stroke-linecap="round" stroke-opacity=".55"/>
-  <path d="M165 478C248 354 337 355 430 478C523 601 616 602 709 478C802 355 895 354 988 478C1081 602 1170 601 1253 478" stroke="#F07F4F" stroke-width="7" stroke-linecap="round" stroke-opacity=".7"/>
-  <text x="104" y="155" fill="#FFF8EA" font-family="Georgia, 'Times New Roman', serif" font-size="54" font-weight="700" letter-spacing="-2">Demo video coming soon</text>
-  <text x="106" y="204" fill="#F2D6B0" font-family="Verdana, sans-serif" font-size="20" letter-spacing="4">VOICE CLONING / EMOTION / LOCAL INFERENCE</text>
-  <text x="104" y="604" fill="#FFF8EA" fill-opacity=".75" font-family="Verdana, sans-serif" font-size="22">Placeholder for a 30-45 second launch film and sample reel.</text>
-  <defs>
-    <linearGradient id="paint0_linear" x1="0" y1="0" x2="1280" y2="720" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#15120E"/>
-      <stop offset=".5" stop-color="#241912"/>
-      <stop offset="1" stop-color="#10151C"/>
-    </linearGradient>
-  </defs>
+  <title id="title">Inflect launch film placeholder</title>
+  <desc id="desc">Editorial cream paper video placeholder matching the Inflect hero banner.</desc>
+  <rect width="1280" height="720" rx="42" fill="#F6F0E4"/>
+  <filter id="grain" x="0" y="0" width="100%" height="100%">
+    <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+    <feComponentTransfer>
+      <feFuncA type="table" tableValues="0 0.035"/>
+    </feComponentTransfer>
+  </filter>
+  <rect width="1280" height="720" rx="42" filter="url(#grain)" opacity=".45"/>
+  <rect x="58" y="58" width="1164" height="604" rx="30" fill="#FBF6EC" stroke="#D7C7B0" stroke-width="1.2"/>
+  <path d="M96 385C158 384 206 388 258 381C316 374 341 348 366 384C392 420 420 397 440 383C463 366 486 373 506 384C529 397 551 392 568 380C589 365 608 358 627 383C650 413 671 417 690 384C711 347 729 312 750 383C773 461 795 472 817 383C840 290 861 260 884 383C906 505 929 492 950 384C972 272 993 319 1015 383C1038 449 1062 419 1086 389C1112 356 1144 382 1184 383" stroke="#161616" stroke-width="5.5" stroke-linecap="round"/>
+  <path d="M600 440L600 280L732 360L600 440Z" fill="#C96F45"/>
+  <circle cx="666" cy="360" r="124" stroke="#C96F45" stroke-width="2" stroke-opacity=".35"/>
+  <text x="92" y="135" fill="#171717" font-family="Georgia, 'Times New Roman', serif" font-size="58" font-weight="700" letter-spacing="-2">Launch film placeholder</text>
+  <text x="94" y="184" fill="#3B342D" font-family="Verdana, sans-serif" font-size="20">A short demo for Inflect-Nano: clone, control, stabilize, enhance.</text>
+  <line x1="94" y1="220" x2="232" y2="220" stroke="#C96F45" stroke-width="3"/>
+  <text x="94" y="600" fill="#2D2924" font-family="Verdana, sans-serif" font-size="20">Replace this card with the final 30-45 second product demo.</text>
+  <text x="900" y="604" fill="#C96F45" font-family="Verdana, sans-serif" font-size="16" letter-spacing="2">INFLECT-NANO / PREVIEW</text>
 </svg>
