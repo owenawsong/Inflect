@@ -1,0 +1,22 @@
+<svg width="1280" height="720" viewBox="0 0 1280 720" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Inflect demo video placeholder</title>
+  <desc id="desc">A cinematic placeholder card for the future Inflect product demo video.</desc>
+  <rect width="1280" height="720" rx="36" fill="#11100E"/>
+  <path d="M0 0H1280V720H0V0Z" fill="url(#paint0_linear)"/>
+  <circle cx="1032" cy="122" r="280" fill="#F07F4F" fill-opacity=".20"/>
+  <circle cx="238" cy="626" r="300" fill="#F7C66B" fill-opacity=".14"/>
+  <rect x="72" y="70" width="1136" height="580" rx="36" fill="#FFF8EA" fill-opacity=".06" stroke="#FFF8EA" stroke-opacity=".18"/>
+  <path d="M554 262L770 383L554 504V262Z" fill="#FFF8EA"/>
+  <path d="M165 526C248 402 337 403 430 526C523 649 616 650 709 526C802 403 895 402 988 526C1081 650 1170 649 1253 526" stroke="#F7C66B" stroke-width="12" stroke-linecap="round" stroke-opacity=".55"/>
+  <path d="M165 478C248 354 337 355 430 478C523 601 616 602 709 478C802 355 895 354 988 478C1081 602 1170 601 1253 478" stroke="#F07F4F" stroke-width="7" stroke-linecap="round" stroke-opacity=".7"/>
+  <text x="104" y="155" fill="#FFF8EA" font-family="Georgia, 'Times New Roman', serif" font-size="54" font-weight="700" letter-spacing="-2">Demo video coming soon</text>
+  <text x="106" y="204" fill="#F2D6B0" font-family="Verdana, sans-serif" font-size="20" letter-spacing="4">VOICE CLONING / EMOTION / LOCAL INFERENCE</text>
+  <text x="104" y="604" fill="#FFF8EA" fill-opacity=".75" font-family="Verdana, sans-serif" font-size="22">Placeholder for a 30-45 second launch film and sample reel.</text>
+  <defs>
+    <linearGradient id="paint0_linear" x1="0" y1="0" x2="1280" y2="720" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#15120E"/>
+      <stop offset=".5" stop-color="#241912"/>
+      <stop offset="1" stop-color="#10151C"/>
+    </linearGradient>
+  </defs>
+</svg>

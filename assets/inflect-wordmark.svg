@@ -1,0 +1,19 @@
+<svg width="1200" height="300" viewBox="0 0 1200 300" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Inflect wordmark</title>
+  <desc id="desc">A warm editorial wordmark for the Inflect speech project.</desc>
+  <rect width="1200" height="300" rx="42" fill="#11100E"/>
+  <path d="M0 0H1200V300H0V0Z" fill="url(#bg)"/>
+  <circle cx="1012" cy="68" r="180" fill="#F07F4F" fill-opacity=".18"/>
+  <circle cx="152" cy="240" r="190" fill="#F7C66B" fill-opacity=".12"/>
+  <path d="M139 197C193 116 250 117 311 197C371 276 432 277 493 197C554 117 615 116 675 197C736 277 797 276 858 197C918 117 976 116 1030 197" stroke="#F7C66B" stroke-width="10" stroke-linecap="round"/>
+  <path d="M139 161C193 80 250 81 311 161C371 240 432 241 493 161C554 81 615 80 675 161C736 241 797 240 858 161C918 81 976 80 1030 161" stroke="#F07F4F" stroke-width="5" stroke-linecap="round" stroke-opacity=".85"/>
+  <text x="132" y="145" fill="#FFF8EA" font-family="Georgia, 'Times New Roman', serif" font-size="86" font-weight="700" letter-spacing="-4">Inflect</text>
+  <text x="136" y="192" fill="#F2D6B0" font-family="Verdana, sans-serif" font-size="20" letter-spacing="5">LOCAL EXPRESSIVE SPEECH</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="300" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#15120E"/>
+      <stop offset=".52" stop-color="#201812"/>
+      <stop offset="1" stop-color="#0E1116"/>
+    </linearGradient>
+  </defs>
+</svg>

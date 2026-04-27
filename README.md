@@ -1,192 +1,168 @@
-# Inflect
+<p align="center">
+  <img src="assets/inflect-wordmark.svg" alt="Inflect" width="720">
+</p>
 
-Inflect is a local research workspace for building a stronger English zero-shot TTS stack around ZipVoice.
+<p align="center">
+  <strong>Expressive, local-first English speech generation.</strong><br>
+  A research-preview TTS stack built for zero-shot voices, natural pacing, and controllable performance on consumer hardware.
+</p>
 
-The repository is not a polished pip package yet. It is the actual working project used for:
+<p align="center">
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-111111"></a>
+  <img alt="Status" src="https://img.shields.io/badge/status-research%20preview-f07f4f">
+  <img alt="Focus" src="https://img.shields.io/badge/focus-local%20TTS-1f6feb">
+  <img alt="Platform" src="https://img.shields.io/badge/platform-Windows%20%7C%20CUDA%20%7C%20CPU-2ea44f">
+</p>
 
-- VoxCPM2 synthetic dataset generation
-- ZipVoice and Lux-inspired runtime benchmarking
-- ZipVoice teacher fine-tuning
-- Inflect-specific enhancement and paralinguistic experiments
+---
 
-## Current Status
+> **Inflect is not a polished model release yet.** This repository is the public-facing scaffold for the active research project: model experiments, benchmark harnesses, dataset tooling, and release documentation. Public weights, sample gallery, and installable packages will be linked here when they are ready.
 
-- Main backbone direction: `ZipVoice`
-- Current runtime default: `inflect_base + lux solver`
-- Current synthetic foundation dataset: VoxCPM2 English corpus
-- Current fine-tune target: ZipVoice teacher adapted on VoxCPM data
-- Current phase: foundation fine-tuning and dataset scaling
+## Why Inflect Exists
 
-This repo already contains real operational scripts, but parts of the project are still research-grade rather than release-grade.
+Most small TTS models force a tradeoff: clean audio but flat delivery, expressive delivery but unstable speech, or impressive demos that collapse under longer prompts. Inflect is being built around a stricter goal:
 
-## Current Runtime Stack
+**Make a small local TTS system feel emotionally alive without losing stability.**
 
-The currently chosen inference stack is:
+The near-term target is an English-only model that can run locally, clone voices from short references, handle long prompts without falling apart, and eventually support explicit style and paralinguistic controls.
 
-- `zipvoice_distill`
-- `4` inference steps
-- guidance scale `3.0`
-- direct prompt transcripts
-- Lux/LinaCodec-inspired `48k` decoder path
-- Lux solver
-- `t_shift = 0.9`
-- target RMS `0.01`
-- no Lux `speed * 1.3` hack
-- no default prompt cap
+## Demo Preview
 
-That is the working Inflect base today. Real LuxTTS is kept as a benchmark and idea source, not the training base.
+<p align="center">
+  <a href="docs/MEDIA_KIT.md">
+    <img src="assets/demo-video-placeholder.svg" alt="Inflect demo video placeholder" width="840">
+  </a>
+</p>
 
-## What Is In This Repo
+| Asset | Status | Notes |
+| --- | --- | --- |
+| Product demo video | Placeholder | Planned: 30-45 second clean launch demo. |
+| Voice clone samples | In progress | Will compare base, tuned, and enhanced outputs. |
+| Long-prompt stress tests | In progress | Focused on pacing, pauses, and word coverage. |
+| Inflect-Enhance examples | Planned | Optional post-generation restoration stage. |
 
-### `scripts/`
+## What We Are Building
 
-Operational entrypoints for:
+Inflect is organized as a modular speech stack:
 
-- VoxCPM HF Space generation
-- VoxCPM local rental-GPU generation
-- text-corpus construction
-- generation-plan construction
-- ZipVoice/Lux/Inflect comparison benches
-- teacher fine-tuning prep and launch
-- dataset upload and release prep
-
-See [scripts/README.md](C:/users/owen/Inflect-New/scripts/README.md).
-
-### `inflect/`
-
-Inflect-native model code and experiments:
-
-- `enhancer/`
-- `para_module/`
-- `data/`
-
-See [inflect/README.md](C:/users/owen/Inflect-New/inflect/README.md).
-
-### `voice-encoder/`
-
-Separate voice-conditioning and paralinguistic research area with its own training and preprocessing scripts.
-
-See [voice-encoder/README.md](C:/users/owen/Inflect-New/voice-encoder/README.md).
-
-### `CLAUDE_READ/`
-
-Human-readable project notes, roadmap, and current execution state.
-
-Start with:
-
-- [claude.md](C:/users/owen/Inflect-New/CLAUDE_READ/claude.md)
-- [plan.md](C:/users/owen/Inflect-New/CLAUDE_READ/plan.md)
-- [todo.md](C:/users/owen/Inflect-New/CLAUDE_READ/todo.md)
-
-### Local external dependencies
-
-These are used locally but are intentionally not committed as part of the main GitHub repo:
-
-- `ZipVoice-official/`
-- `third_party/`
-- `reference_voices/`
-- `outputs/`
-
-The repo stores the local ZipVoice fixes as a patch file:
-
-- [zipvoice-local-fixes.patch](C:/users/owen/Inflect-New/patches/zipvoice-local-fixes.patch)
-
-## Main Workflows
-
-### 1. Build VoxCPM2 synthetic data through the HF Space
-
-```powershell
-cd C:\Users\Owen\Inflect-New
-.\.venv-voxcpm\Scripts\python.exe scripts\generate_voxcpm_dataset.py --workers 2 --version 20260411_large_text_v1 --corpus-file outputs\corpora\voxcpm_texts_20000_v2.csv --max-clips 60000
+```mermaid
+flowchart LR
+  A["Reference voice<br/>3-15s audio + transcript"] --> B["Voice conditioning"]
+  C["Text prompt<br/>punctuation + future style tags"] --> D["TTS core"]
+  B --> D
+  D --> E["Runtime stabilizer<br/>chunking, duration checks, retries"]
+  E --> F["Optional Inflect-Enhance<br/>audio restoration"]
+  F --> G["Final 24/48 kHz speech"]
 ```
 
-### 2. Build the same dataset locally on a rental GPU
+Core areas:
+
+- **Inflect-Nano TTS core:** the compact local generator target.
+- **Runtime stability layer:** guardrails for pacing, long prompts, silence, clicks, and bad generations.
+- **Inflect-Enhance:** optional audio restoration for detail, polish, and artifact cleanup.
+- **Paralinguistic controls:** future text tags for breath, laugh, whisper, emphasis, and other non-verbal events.
+- **Benchmark suite:** blind A/B testing, prompt stress tests, duration metrics, and ASR-based text coverage checks.
+
+## Current Research Direction
+
+The project is actively comparing small and medium TTS families:
+
+| Candidate | Why It Matters | Current Read |
+| --- | --- | --- |
+| Lux / ZipVoice lineage | Best tiny expressiveness so far, fast generation path | Promising but needs pacing and stability work. |
+| Kyutai Pocket TTS | Very consistent and compact | Stable, but too flat without serious expressiveness work. |
+| Kokoro-style systems | Clean and reliable audio | Voice cloning and emotion are not the main strength. |
+| Chatterbox / tag-aware systems | Useful for paralinguistic supervision | More useful as a teacher/data source than as the final small core. |
+| Medium 0.3B-0.8B models | Higher ceiling if tiny models hit a wall | Backup path, not the first release target. |
+
+The current safest conclusion: **do not blindly fine-tune until the evaluation loop proves the change helps.** Inflect uses small damage tests, blind A/B, and objective checks before committing to longer runs.
+
+## Repository Map
+
+| Path | Purpose |
+| --- | --- |
+| [`inflect/`](inflect/) | Inflect-native modules and experiments. |
+| [`scripts/`](scripts/) | Dataset generation, benchmark, fine-tuning, ASR, and release tooling. |
+| [`inflect_asr/`](inflect_asr/) | Side project for a small high-quality ASR model and teacher-label pipeline. |
+| [`voice-encoder/`](voice-encoder/) | Voice-conditioning and paralinguistic research area. |
+| [`docs/`](docs/) | Public roadmap, architecture notes, eval plan, and media kit. |
+| [`assets/`](assets/) | Lightweight README/media placeholders. |
+| [`patches/`](patches/) | Local patch sets for upstream research dependencies. |
+
+Local-only research folders such as `outputs/`, `reference_voices/`, `ZipVoice-official/`, and `third_party/` are intentionally not part of the publishable GitHub payload.
+
+## Quickstart
+
+This repo is still research-grade, so the commands below are for contributors running the current workspace, not end users installing a released package.
 
 ```powershell
-cd C:\Users\Owen\Inflect-New
-.\.venv-voxcpm\Scripts\python.exe scripts\generate_voxcpm_dataset_local.py --plan-file outputs\corpora\voxcpm_generation_plan_v2_60k.csv --version 20260412_voxcpm_v2_local --device-id 0 --optimize --normalize
+git clone https://github.com/owenawsong/Inflect.git
+cd Inflect
 ```
 
-### 3. Run ZipVoice / Inflect comparisons
+Create or activate the project environment used by the current experiments:
 
 ```powershell
-cd C:\Users\Owen\Inflect-New
-.\.venv-voxcpm\Scripts\python.exe scripts\run_inflect_base_bench.py
+.\.venv-voxcpm\Scripts\python.exe --version
 ```
 
-### 4. Launch teacher fine-tuning
+Run a local blind A/B server after generating a benchmark folder:
 
 ```powershell
-cd C:\Users\Owen\Inflect-New
-.\.venv-voxcpm\Scripts\python.exe scripts\run_inflect_teacher_finetune.py --preset demo --work-dir outputs\inflect_finetune\teacher_foundation_demo
+.\.venv-voxcpm\Scripts\python.exe blind_ab_server.py `
+  --bench-root outputs\zipvoice_bench\YOUR_BENCH `
+  --state-dir .blind_ab_state_YOUR_BENCH `
+  --port 18132
 ```
 
-## Dataset Status
+See the docs before running training jobs:
 
-The current active VoxCPM dataset run is:
+- [Architecture](docs/ARCHITECTURE.md)
+- [Evaluation Plan](docs/EVALUATION.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Publishing Guide](PUBLISHING.md)
 
-- `outputs/voxcpm_dataset/20260411_large_text_v1`
+## Evaluation Philosophy
 
-Current generated size at the time of this documentation update:
+Inflect is judged by listening first, but not only by listening.
 
-- `21,543` clips
-- `56` voices
-- mixed old and `v2` text pools
+We track:
 
-Planned clean `v2` target:
+- Speaker similarity and voice consistency.
+- Naturalness, emotion, and pacing.
+- Long-prompt stability.
+- Word coverage and skipped-word rate.
+- Leading clicks, breath artifacts, silence, and RMS jumps.
+- Runtime speed, memory footprint, and local deployability.
 
-- `20,000` English texts
-- `60,000` clips
-- `56` voices
-- about `103` hours total
+The benchmark loop is designed to catch the failures that polished demos hide.
 
-Important files:
+## Inflect-ASR
 
-- [voxcpm_texts_20000_v2.csv](C:/users/owen/Inflect-New/outputs/corpora/voxcpm_texts_20000_v2.csv)
-- [voxcpm_generation_plan_v2_60k.csv](C:/users/owen/Inflect-New/outputs/corpora/voxcpm_generation_plan_v2_60k.csv)
+Inflect also includes a side project for small English ASR/STT. The current plan is to start from Moonshine Small, use strong teacher models such as MiMo V2.5 ASR for filtered pseudo-labeling, and evaluate against Open-ASR-style subsets.
 
-## Fine-Tuning Status
+See [`inflect_asr/ROADMAP.md`](inflect_asr/ROADMAP.md).
 
-The teacher fine-tuning path is now working locally again.
+## Release Plan
 
-Recent fix:
+Planned public milestones:
 
-- the non-finite gradient crash was caused by the non-`k2` fallback Swoosh activation in ZipVoice
-- the local fix is preserved in [zipvoice-local-fixes.patch](C:/users/owen/Inflect-New/patches/zipvoice-local-fixes.patch)
+1. **Research preview repo:** clean docs, scripts, roadmap, and reproducible benchmark harnesses.
+2. **Sample gallery:** curated audio comparisons and failure cases.
+3. **Inflect-Nano preview:** first usable compact TTS checkpoint.
+4. **Inflect-Enhance preview:** optional lightweight restoration model.
+5. **Tagged expressiveness pass:** explicit text controls for emotional and paralinguistic delivery.
 
-Current training intent:
+See [docs/ROADMAP.md](docs/ROADMAP.md) for the fuller plan.
 
-- foundation fine-tune the ZipVoice teacher on VoxCPM synthetic data
-- validate cloning, consistency, and quality improvements
-- later add expressive data once the foundation pass is stable
+## Honest Status
 
-## GitHub vs Hugging Face
+Inflect is ambitious and still experimental. Some current model paths improve one property while hurting another. The public repo is being shaped now so that when a release lands, it is understandable, reproducible, and credible rather than just a pile of local experiments.
 
-This project is intentionally split:
+If a demo sounds good, it should survive the benchmark suite. If it does not, it is not release-ready.
 
-- GitHub:
-  - source code
-  - docs
-  - scripts
-  - patch files
-- Hugging Face Datasets:
-  - generated VoxCPM synthetic datasets
-- Local only:
-  - checkpoints
-  - outputs
-  - reference voice audio
-  - vendored external repos
+## License
 
-See [PUBLISHING.md](C:/users/owen/Inflect-New/PUBLISHING.md).
+Repository code and documentation are licensed under Apache 2.0 unless otherwise noted.
 
-## Licensing
-
-Repository code and docs are licensed under Apache 2.0 unless otherwise noted.
-
-Important exceptions:
-
-- external code in local-only repos such as `ZipVoice-official/` and `third_party/` follows its own upstream licenses
-- generated datasets are documented separately and should not inherit the repo code license automatically
-- reference voice audio is not part of the public GitHub repo
-
-See [LICENSE](C:/users/owen/Inflect-New/LICENSE) and [PUBLISHING.md](C:/users/owen/Inflect-New/PUBLISHING.md).
+Generated datasets, reference voices, third-party code, and model checkpoints may have separate terms and are documented separately when released. See [LICENSE](LICENSE) and [PUBLISHING.md](PUBLISHING.md).

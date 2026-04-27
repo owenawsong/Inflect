@@ -44,7 +44,7 @@ The current teacher fine-tuning path depends on local changes to ZipVoice that a
 
 Those changes are preserved here:
 
-- [zipvoice-local-fixes.patch](C:/users/owen/Inflect-New/patches/zipvoice-local-fixes.patch)
+- [zipvoice-local-fixes.patch](patches/zipvoice-local-fixes.patch)
 
 Apply that patch to a local `ZipVoice-official/` checkout before running the current fine-tuning workflow.
 
@@ -65,8 +65,8 @@ The better public-release flow is:
 
 Use:
 
-- [prepare_public_voxcpm_dataset.py](C:/users/owen/Inflect-New/scripts/prepare_public_voxcpm_dataset.py)
-- [upload_voxcpm_dataset.py](C:/users/owen/Inflect-New/scripts/upload_voxcpm_dataset.py)
+- [prepare_public_voxcpm_dataset.py](scripts/prepare_public_voxcpm_dataset.py)
+- [upload_voxcpm_dataset.py](scripts/upload_voxcpm_dataset.py)
 
 ## Dataset Licensing
 
@@ -95,7 +95,7 @@ Target username:
 Example public upload after preparing a snapshot:
 
 ```powershell
-cd C:\Users\Owen\Inflect-New
+cd Inflect
 $env:HF_TOKEN = "your_token_here"
 .\.venv-voxcpm\Scripts\python.exe scripts\prepare_public_voxcpm_dataset.py --dataset-dir outputs\voxcpm_dataset\20260411_large_text_v1 --out-dir outputs\publish\voxcpm2_synthetic_en_v1_public
 .\.venv-voxcpm\Scripts\python.exe scripts\upload_voxcpm_dataset.py --dataset-dir outputs\publish\voxcpm2_synthetic_en_v1_public --repo-id owensong/voxcpm2-synthetic-en-v1

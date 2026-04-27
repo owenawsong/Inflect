@@ -1,6 +1,6 @@
 # Project Structure
 
-This file describes the real working layout of the repo as of 2026-04-13.
+This file describes the publishable project layout. Local generated artifacts, checkpoints, and third-party checkouts are intentionally excluded from GitHub.
 
 ## Top level
 
@@ -26,7 +26,7 @@ Operational scripts for the active workflows:
 - teacher fine-tune preparation and launch
 - dataset upload and release prep
 
-Use [scripts/README.md](C:/users/owen/Inflect-New/scripts/README.md) as the real entrypoint.
+Use [scripts/README.md](scripts/README.md) as the real entrypoint.
 
 ### `inflect/`
 
@@ -39,7 +39,7 @@ Inflect-specific model and experiment code:
 - `data/`
   - dataset utilities, extraction helpers, tag definitions
 
-Use [inflect/README.md](C:/users/owen/Inflect-New/inflect/README.md).
+Use [inflect/README.md](inflect/README.md).
 
 ### `voice-encoder/`
 
@@ -50,7 +50,7 @@ Separate research area for:
 - paralinguistic data prep
 - adapter training experiments
 
-Use [voice-encoder/README.md](C:/users/owen/Inflect-New/voice-encoder/README.md).
+Use [voice-encoder/README.md](voice-encoder/README.md).
 
 ### `CLAUDE_READ/`
 
@@ -99,17 +99,17 @@ Other local external repos and integrations such as LuxTTS/LinaCodec experiments
 
 ## Important current files
 
-- [run_inflect_teacher_finetune.py](C:/users/owen/Inflect-New/scripts/run_inflect_teacher_finetune.py)
+- [run_inflect_teacher_finetune.py](scripts/run_inflect_teacher_finetune.py)
   - main launcher for ZipVoice teacher fine-tuning
-- [generate_voxcpm_dataset.py](C:/users/owen/Inflect-New/scripts/generate_voxcpm_dataset.py)
+- [generate_voxcpm_dataset.py](scripts/generate_voxcpm_dataset.py)
   - HF Space dataset generation
-- [generate_voxcpm_dataset_local.py](C:/users/owen/Inflect-New/scripts/generate_voxcpm_dataset_local.py)
+- [generate_voxcpm_dataset_local.py](scripts/generate_voxcpm_dataset_local.py)
   - local/rental-GPU dataset generation
-- [build_voxcpm_text_corpus_v2.py](C:/users/owen/Inflect-New/scripts/build_voxcpm_text_corpus_v2.py)
+- [build_voxcpm_text_corpus_v2.py](scripts/build_voxcpm_text_corpus_v2.py)
   - current higher-quality English corpus builder
-- [build_voxcpm_generation_plan.py](C:/users/owen/Inflect-New/scripts/build_voxcpm_generation_plan.py)
+- [build_voxcpm_generation_plan.py](scripts/build_voxcpm_generation_plan.py)
   - current balanced 60k plan builder
-- [zipvoice-local-fixes.patch](C:/users/owen/Inflect-New/patches/zipvoice-local-fixes.patch)
+- [zipvoice-local-fixes.patch](patches/zipvoice-local-fixes.patch)
   - required local patch set for current teacher fine-tuning
 
 ## What Not To Assume
