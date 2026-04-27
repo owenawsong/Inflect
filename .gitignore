@@ -10,6 +10,8 @@ __pycache__/
 # Editor and local tool state
 .vscode/
 .claude/
+.blind_ab_state*/
+.tmp_*/
 
 # Local package workspaces / caches
 .chatterbox_pkgs/
@@ -22,6 +24,7 @@ reference_voices/
 reference_voices_backup/
 emotion-deltas/
 preprocess_manifest.json
+*.log
 
 # Nested external repos / vendored code kept local
 ZipVoice-official/
@@ -41,6 +44,11 @@ voice-encoder/outputs/
 # Inflect training artifacts
 inflect/data/*.pt
 inflect/data/*.pth
+inflect/enhancer/checkpoints/
 inflect/para_module/checkpoints/
 inflect/para_module/checkpoints_strict/
 inflect/para_module/test_outputs/
+
+# ASR/TTS local side quests and downloaded corpora
+ambient-monitor/
+elevenlabs-dataset/

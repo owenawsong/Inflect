@@ -1,0 +1,14 @@
+<svg width="1200" height="680" viewBox="0 0 1200 680" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Inflect sample card placeholder</title>
+  <desc id="desc">A placeholder image for future Inflect audio sample comparisons.</desc>
+  <rect width="1200" height="680" rx="40" fill="#11100E"/>
+  <rect x="58" y="58" width="1084" height="564" rx="34" fill="#FFF8EA" fill-opacity=".06" stroke="#FFF8EA" stroke-opacity=".16"/>
+  <text x="92" y="134" fill="#FFF8EA" font-family="Georgia, 'Times New Roman', serif" font-size="48" font-weight="700">Sample gallery placeholder</text>
+  <text x="94" y="178" fill="#F2D6B0" font-family="Verdana, sans-serif" font-size="18" letter-spacing="3">BASE / TUNED / ENHANCED</text>
+  <g stroke-linecap="round">
+    <path d="M100 388C126 310 154 310 180 388C206 466 234 466 260 388C286 310 314 310 340 388C366 466 394 466 420 388C446 310 474 310 500 388" stroke="#F07F4F" stroke-width="10"/>
+    <path d="M548 388C574 328 602 328 628 388C654 448 682 448 708 388C734 328 762 328 788 388C814 448 842 448 868 388C894 328 922 328 948 388" stroke="#F7C66B" stroke-width="10"/>
+    <path d="M100 470H1030" stroke="#FFF8EA" stroke-opacity=".2" stroke-width="2"/>
+  </g>
+  <text x="96" y="546" fill="#FFF8EA" fill-opacity=".74" font-family="Verdana, sans-serif" font-size="22">Drop real waveform screenshots, listening notes, and audio links here.</text>
+</svg>
