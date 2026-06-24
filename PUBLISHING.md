@@ -1,84 +1,73 @@
 # Publishing
 
-This project mixes real source code with large local artifacts and private research inputs. Public publishing has to separate those cleanly.
+This project mixes source code, released model packages, large generated artifacts, and private research inputs. Public publishing has to separate those cleanly.
 
 ## Publish Split
 
-### GitHub should contain
+### GitHub Should Contain
 
 - source code
 - scripts
 - docs
 - patch files for local external dependencies
 - lightweight config and metadata files
+- links to released Hugging Face models and datasets
 
-### Hugging Face Datasets should contain
+### Hugging Face Models Should Contain
 
-- prepared VoxCPM synthetic datasets in `AudioFolder` layout
+- runnable model weights
+- model card
+- inference entry points
+- examples or sample gallery assets
+- model-specific license and limitations
+
+Current released model:
+
+- [owensong/Inflect-Nano-v1](https://huggingface.co/owensong/Inflect-Nano-v1)
+
+### Hugging Face Datasets Should Contain
+
+- frozen synthetic or curated dataset snapshots
 - dataset cards
 - dataset-specific licensing and provenance notes
+- generation settings when audio is teacher-generated
 
-### Keep local only
+### Keep Local Only
 
 - `outputs/`
 - `reference_voices/`
-- checkpoints
+- raw checkpoints
 - virtual environments
 - local external repos such as `ZipVoice-official/` and `third_party/`
+- unfinished teacher-generation runs
+- private reference audio
 
-## Current GitHub State
+## Current Public Status
 
-The publish branch currently contains the release scaffold and should be expanded with the real source/docs set.
+Inflect-Nano-v1 is released on Hugging Face as a complete 4.63M-parameter English text-to-waveform stack.
 
-Branch:
+Inflect-Nano-v2 is active research. Do not publish v2 claims as release facts until a frozen checkpoint, sample gallery, evaluation notes, and model card are ready.
 
-- `codex/publish-scaffold`
+## Release Rules
 
-Draft PR:
-
-- [PR #1](https://github.com/owenawsong/Inflect/pull/1)
-
-## Local ZipVoice Fixes
-
-The current teacher fine-tuning path depends on local changes to ZipVoice that are not committed inside this repo's main tree because `ZipVoice-official/` is a nested local checkout.
-
-Those changes are preserved here:
-
-- [zipvoice-local-fixes.patch](patches/zipvoice-local-fixes.patch)
-
-Apply that patch to a local `ZipVoice-official/` checkout before running the current fine-tuning workflow.
-
-## Dataset Release Strategy
-
-The active dataset run is:
-
-- `outputs/voxcpm_dataset/20260411_large_text_v1`
-
-It is usable, but it is an active working dataset rather than a clean frozen public snapshot.
-
-The better public-release flow is:
-
-1. freeze a snapshot
-2. write a public dataset card
-3. attach a clear license/provenance notice
-4. upload that frozen snapshot to Hugging Face
-
-Use:
-
-- [prepare_public_voxcpm_dataset.py](scripts/prepare_public_voxcpm_dataset.py)
-- [upload_voxcpm_dataset.py](scripts/upload_voxcpm_dataset.py)
+- Do not commit model weights directly to GitHub.
+- Do not commit generated audio datasets directly to GitHub.
+- Do not label synthetic datasets `apache-2.0` unless the dataset license has been separately reviewed.
+- Do not claim voice cloning for v1. The released v1 model is a single English male voice.
+- Do not claim production quality. v1 is an experimental tiny-model release.
+- Do not claim v2 is better than v1 until fixed-prompt listening and objective checks support it.
 
 ## Dataset Licensing
 
-Do not label the public dataset `apache-2.0`.
+Dataset licensing is separate from repository licensing.
 
 Reason:
 
 - the repo code license is not automatically the dataset license
-- the dataset is synthetic audio generated from reference voice prompts
-- voice/source provenance is mixed and must be disclosed honestly
+- synthetic audio can still inherit constraints from reference voices, prompts, or teacher models
+- source voice rights and upstream model terms must be disclosed honestly
 
-For the current public dataset release path, the safe default is:
+Safe default for public synthetic dataset cards:
 
 - dataset card tag: `license: other`
 - explicit release note explaining:
@@ -86,20 +75,25 @@ For the current public dataset release path, the safe default is:
   - generated audio is synthetic
   - source voice rights and upstream model terms still matter
 
-## Uploading the Dataset to Hugging Face
+## Release Checklist
 
-Target username:
+Before publishing a model package to Hugging Face:
 
-- `owensong`
+1. Freeze the exact checkpoint files.
+2. Render a fixed sample gallery.
+3. Run the objective diagnostics used by the project.
+4. Write a model card with real limitations.
+5. Verify clean install and CLI inference from a fresh environment.
+6. Link the Hugging Face release from the GitHub README.
 
-Example public upload after preparing a snapshot:
+Before publishing a dataset package to Hugging Face:
 
-```powershell
-cd Inflect
-$env:HF_TOKEN = "your_token_here"
-.\.venv-voxcpm\Scripts\python.exe scripts\prepare_public_voxcpm_dataset.py --dataset-dir outputs\voxcpm_dataset\20260411_large_text_v1 --out-dir outputs\publish\voxcpm2_synthetic_en_v1_public
-.\.venv-voxcpm\Scripts\python.exe scripts\upload_voxcpm_dataset.py --dataset-dir outputs\publish\voxcpm2_synthetic_en_v1_public --repo-id owensong/voxcpm2-synthetic-en-v1
-```
+1. Freeze a snapshot.
+2. Remove private reference material.
+3. Write a public dataset card.
+4. Include provenance and generation settings.
+5. Verify the manifest/audio layout loads cleanly.
+6. Link the dataset only after the upload is complete.
 
 ## GitHub Cleanup Rules
 
@@ -108,12 +102,14 @@ $env:HF_TOKEN = "your_token_here"
 - do not commit checkpoints
 - do not commit `.pyc` or `__pycache__`
 - do not commit full vendor repos unless intentionally vendoring them
+- do not commit credentials, API keys, tokens, or private SSH material
 
 ## Recommended Publish Order
 
-1. finish repo docs and structure cleanup
-2. stage only publishable code/docs
-3. push GitHub branch updates
-4. freeze a dataset snapshot
-5. upload the public dataset to Hugging Face
-6. link the dataset from the GitHub README
+1. Update GitHub source/docs.
+2. Freeze model or dataset artifact locally.
+3. Build a clean Hugging Face package.
+4. Test from a fresh clone or fresh environment.
+5. Upload to Hugging Face.
+6. Link the release from GitHub.
+7. Only then announce or benchmark publicly.
