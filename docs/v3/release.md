@@ -25,7 +25,8 @@ and reference enrollment have their own footprints.
 
 Mini's reference-based Voice Tuner, event branch and enhancer are separate
 components. Their presence does not imply the same features in Micro or Atom.
-See [features and supported commands](features.md).
+The event package includes eight vocal-event tags for all six preset voices,
+with CPU/native-24-kHz playback. See [features and supported commands](features.md).
 
 The published language is English. General emotion/style tags, exact voice
 cloning, guaranteed accent transfer, acoustic streaming, browser/WASM exports,
