@@ -1,18 +1,18 @@
 cff-version: 1.2.0
-message: "If you use Inflect v2, please cite this software."
-title: "Inflect v2: Complete Local Text-to-Waveform TTS at 3.96M and 9.36M Parameters"
+message: "If you use Inflect, please cite this software."
+title: "Inflect v3: Compact Local Text-to-Speech"
 type: software
 authors:
   - family-names: Song
     given-names: Owen
 repository-code: "https://github.com/owenawsong/Inflect"
-url: "https://huggingface.co/spaces/owensong/Inflect-v2"
+url: "https://huggingface.co/spaces/owensong/Inflect-v3"
 license: Apache-2.0
-version: 2.0.0
-date-released: 2026-07-24
+version: 3.0.0
+date-released: 2026-11-11
 keywords:
   - text-to-speech
   - speech synthesis
-  - edge AI
   - local inference
+  - voice adaptation
   - PyTorch

@@ -1,243 +1,204 @@
-<h1 align="center">Inflect v2</h1>
-<p align="center"><strong>Complete 24 kHz English text-to-waveform TTS at 3.96M and 9.36M parameters.</strong><br>
-Two local models. One runtime. No external vocoder or hosted inference component.</p>
-
 <p align="center">
-  <a href="https://huggingface.co/spaces/owensong/Inflect-v2"><img alt="Playground" src="https://img.shields.io/badge/PLAYGROUND-1769E0?style=for-the-badge&logo=huggingface&logoColor=white"></a>
-  <a href="https://huggingface.co/owensong/Inflect-Nano-v2"><img alt="Inflect Nano v2" src="https://img.shields.io/badge/NANO_3.96M-F7FAFF?style=for-the-badge&logo=huggingface&logoColor=1769E0"></a>
-  <a href="https://huggingface.co/owensong/Inflect-Micro-v2"><img alt="Inflect Micro v2" src="https://img.shields.io/badge/MICRO_9.36M-0B2A54?style=for-the-badge&logo=huggingface&logoColor=white"></a>
-  <a href="docs/EVALUATION.md"><img alt="Evaluation" src="https://img.shields.io/badge/EVALUATION-8EC8FF?style=for-the-badge&logo=chartdotjs&logoColor=0B2A54"></a>
-  <a href="https://discord.gg/CVJYedvzvp"><img alt="Discord" src="https://img.shields.io/badge/DISCORD-1769E0?style=for-the-badge&logo=discord&logoColor=white"></a>
+  <a href="https://huggingface.co/spaces/owensong/Inflect-v3"><img src="assets/v3/hero.png" alt="Inflect v3 by Owen Song. Mini 34.31M, Micro 11.79M, Atom 157.19K learned synthesis-core parameters." width="100%"></a>
 </p>
 
+<h1 align="center">Inflect v3</h1>
+<p align="center"><strong>A complete voice. A smaller footprint.</strong><br>
+Six English voices. Three model sizes. Speech that runs on your hardware.</p>
+
 <p align="center">
-  <a href="#choose-your-model">Models</a> ·
-  <a href="#evaluation">Evaluation</a> ·
-  <a href="#run-it">Run it</a> ·
-  <a href="#architecture">Architecture</a> ·
-  <a href="#documentation">Documentation</a>
+  <a href="https://huggingface.co/spaces/owensong/Inflect-v3"><img src="assets/v3/nav-playground.svg" alt="Playground" height="32"></a>
+  <a href="#quick-start"><img src="assets/v3/nav-quickstart.svg" alt="Quick start" height="32"></a>
+  <a href="https://huggingface.co/collections/owensong/inflect-v3"><img src="assets/v3/nav-models.svg" alt="Models" height="32"></a>
+  <a href="https://discord.gg/CVJYedvzvp"><img src="assets/v3/nav-discord.svg" alt="Discord" height="32"></a>
+  <a href="#benchmarks"><img src="assets/v3/nav-benchmarks.svg" alt="Benchmarks" height="32"></a>
 </p>
 
----
+<p align="center"><strong>Apache 2.0</strong> &nbsp;&middot;&nbsp; <strong>Local generation</strong> &nbsp;&middot;&nbsp; <strong>Native 24 kHz</strong><br>
+Mini adds reference-voice tuning, vocal events, and optional 48 kHz enhancement.</p>
+
+Inflect is a family of compact English text-to-speech models. Choose a voice,
+enter your text, and generate a WAV locally. Start with **Mini** for the most
+features, **Micro** for a smaller neural model, or **Atom** for the smallest
+learned synthesis core.
+
+**[Try the browser playground](https://huggingface.co/spaces/owensong/Inflect-v3)**
+before installing. Compare models, switch voices, and download your own results.
 
 ## Choose your model
 
-| **Inflect-Micro-v2** | **Inflect-Nano-v2** |
-| --- | --- |
-| [![Inflect Micro v2 cover](assets/inflect-micro-v2-cover.png)](https://huggingface.co/owensong/Inflect-Micro-v2) | [![Inflect Nano v2 cover](assets/inflect-nano-v2-cover.png)](https://huggingface.co/owensong/Inflect-Nano-v2) |
-| **Quality first.** The stronger overall release at 9,356,513 complete parameters. | **Footprint first.** The full synthesis path in 3,966,721 complete parameters. |
-| [Model and weights](https://huggingface.co/owensong/Inflect-Micro-v2) | [Model and weights](https://huggingface.co/owensong/Inflect-Nano-v2) |
+| | **[Mini](https://huggingface.co/owensong/Inflect-Mini-v3)** | **[Micro](https://huggingface.co/owensong/Inflect-Micro-v3)** | **[Atom](https://huggingface.co/owensong/Inflect-Atom-v3)** |
+| :--- | :--- | :--- | :--- |
+| Best starting point | **Quality and features** | Compact neural speech | Smallest learned core |
+| Learned synthesis core | **34.31M** | **11.79M** | **157.19K** |
+| English preset voices | 6 | 6 | 6 |
+| Native output | 24 kHz | 24 kHz | 24 kHz |
+| Optional 48 kHz enhancement | Yes | Not included | Not included |
+| Reference-voice tuning | Yes | Not included | Not included |
+| Optional vocal events | Yes | Not included | Not included |
+| Download | [Mini package](https://huggingface.co/owensong/Inflect-Mini-v3/tree/main) | [Micro package](https://huggingface.co/owensong/Inflect-Micro-v3/tree/main) | [Atom package](https://huggingface.co/owensong/Inflect-Atom-v3/tree/main) |
 
-Both packages expose the same Python API and CLI. The counts include text
-encoding, duration prediction, latent speech generation, and the integrated
-waveform decoder. Training-only discriminators are excluded because they are
-not loaded for synthesis.
+These are **learned synthesis-core counts**, not total installation size or RAM.
+Pronunciation assets, dependencies, voice conditioning and optional components
+are additional. Atom uses signal-processing-based waveform generation rather
+than a separate learned neural vocoder.
 
-| | **Micro v2** | **Nano v2** |
-| --- | ---: | ---: |
-| Complete inference parameters | **9,356,513** | **3,966,721** |
-| FP32 weights | **37.53 MB** | **15.97 MB** |
-| Output | 24 kHz mono | 24 kHz mono |
-| Voice | Fixed English male | Fixed English male |
-| Managed CPU throughput | **6.28x real time** | **10.72x real time** |
+## Hear the voices
 
-## Listen first
+**Cassidy, Mark, Hope, James, Sophia, and Jasper** are ready-to-use presets.
+No reference recording is needed for ordinary speech.
 
-Use the **[live Inflect v2 playground](https://huggingface.co/spaces/owensong/Inflect-v2)**
-to compare Micro and Nano on identical text and seeds. It supports speaking
-speed, delivery variation, restrained pitch adjustment, punctuation-aware
-long-text generation, and downloadable WAV output.
+| Voice | Sample text | Native Mini audio |
+| :--- | :--- | :--- |
+| **Cassidy** | Could you bring the smaller suitcase downstairs? | [Listen](https://huggingface.co/owensong/Inflect-Mini-v3/resolve/main/media/mini-cassidy.wav) |
+| **Mark** | Beyond the orchard, a narrow footpath curved toward the ruined tower. | [Listen](https://huggingface.co/owensong/Inflect-Mini-v3/resolve/main/media/mini-mark.wav) |
+| **Hope** | Press the side button once, then wait until the indicator turns green. | [Listen](https://huggingface.co/owensong/Inflect-Mini-v3/resolve/main/media/mini-hope.wav) |
+| **James** | A shadow becomes longer when the light source moves closer to the horizon. | [Listen](https://huggingface.co/owensong/Inflect-Mini-v3/resolve/main/media/mini-james.wav) |
+| **Sophia** | We moved the chairs inside and wiped the wooden table dry. | [Listen](https://huggingface.co/owensong/Inflect-Mini-v3/resolve/main/media/mini-sophia.wav) |
+| **Jasper** | I thought you were arriving tomorrow, but it is lovely to see you. | [Listen](https://huggingface.co/owensong/Inflect-Mini-v3/resolve/main/media/mini-jasper.wav) |
 
-Every output is synthesized from the entered text by the selected published
-checkpoint. The Space does not substitute prerecorded clips.
+These samples are generated native 24 kHz speech, without enhancement or
+reference adaptation. Each voice reads a different passage; use the
+[playground's comparison mode](https://huggingface.co/spaces/owensong/Inflect-v3)
+to compare model sizes on the same text.
 
-## Evaluation
+## Quick start
 
-Inflect reports human preference, predicted naturalness, multi-ASR
-intelligibility, footprint, and runtime separately. They answer different
-questions and are not collapsed into a single score.
+Use **Python 3.12 in a fresh environment**. The self-contained v3 inference
+packages live with their weights on Hugging Face. Download the **whole package**,
+not only a checkpoint.
 
-| Model | Community preference ↑ | UTMOS22 ↑ | Two-ASR semantic WER ↓ | FP32 weights ↓ |
-| --- | ---: | ---: | ---: | ---: |
-| **Inflect-Micro-v2** | **66.2%** | **4.395** | **3.99%** | 37.53 MB |
-| **Inflect-Nano-v2** | **63.9%** | **4.386** | **4.21%** | **15.97 MB** |
-
-<p align="center">
-  <img src="assets/evidence/quality-vs-footprint.svg" alt="Predicted quality versus complete model footprint" width="920">
-</p>
-
-<p align="center">
-  <img src="assets/evidence/asr-consensus.svg" alt="Semantic WER across two ASR systems on 400 matched unseen prompts" width="920">
-</p>
-
-### CPU deployment profile
-
-<p align="center">
-  <img src="assets/evidence/cpu-throughput.svg" alt="Inflect Micro and Nano managed CPU throughput" width="920">
-</p>
-
-The CPU run used the managed Hugging Face CPU Upgrade reference (8 vCPU,
-32 GB RAM), four framework threads, 100 fixed Modern400 prompts, and three
-passes. The first cache-building pass was excluded; passes 2 and 3 form the
-steady-state pool. Micro measured RTF 0.1593 and Nano RTF 0.0933.
-
-**Metric notes**
-
-- Community preference is anonymous randomized pairwise listening. The rates
-  are normalized by model appearances, with ties counting as half a win. It is
-  descriptive community evidence, not formal MOS.
-- UTMOS22 is a learned quality predictor evaluated on 500 matched unseen
-  prompts per voice. It is not human MOS.
-- Headline semantic WER is the equal-weight corpus-level mean of Qwen3-ASR and
-  Nemotron 3.5 on 400 matched unseen prompts. Whisper large-v3 is retained in
-  the raw audit but excluded consistently from the headline due to
-  insertion-heavy failures on part of the comparison set.
-
-See the [full evaluation methodology](docs/EVALUATION.md) for scope,
-competitor selection, limitations, and reproducibility details. Raw manifests,
-hypotheses, intervals, and integrity hashes ship in each Hugging Face model
-repository under `evaluation/`.
-
-## Run it
-
-### From this repository
-
-```bash
-git clone https://github.com/owenawsong/Inflect.git
-cd Inflect
-python -m pip install -r requirements.txt
-
-python examples/download_and_speak.py \
-  --model micro \
-  --text "A complete local voice can fit almost anywhere." \
-  --output inflect.wav
+```sh
+python -m pip install huggingface-hub==0.36.2
+hf download owensong/Inflect-Mini-v3 --local-dir inflect-mini-v3
+cd inflect-mini-v3
+python verify_release.py
+python -m pip install -r core/requirements-cpu.txt
+python run.py speech --profile base --voice cassidy --text "A small idea can become something worth hearing." --subtype PCM_16 --output ../mini-cassidy.wav
 ```
 
-The first run downloads and caches the selected model from Hugging Face.
-Switch `--model micro` to `--model nano` without changing the interface.
+This writes native **24 kHz PCM16** audio. Choose a new output filename in an
+existing directory outside the package. To change voices, replace `cassidy`
+with `mark`, `hope`, `james`, `sophia`, or `jasper`.
 
-Render both models with the same prompt and seed:
-
-```bash
-python examples/compare_models.py \
-  --text "The same sentence, rendered by both Inflect models." \
-  --output-dir comparison
-```
-
-### From a model repository
-
-```bash
-python -m pip install --upgrade huggingface_hub
-hf download owensong/Inflect-Micro-v2 --local-dir Inflect-Micro-v2
-cd Inflect-Micro-v2
-python -m pip install -r requirements.txt
-python inference.py --text "Small models can still speak clearly." --output out.wav
-```
-
-```python
-from inference import InflectTTS
-
-tts = InflectTTS(".", device="cpu")
-sample_rate, waveform = tts.synthesize(
-    "The model returns a complete waveform.",
-    speed=1.0,
-    variation=0.667,
-    seed=7,
-)
-tts.save("The same runtime can write a WAV directly.", "sample.wav", seed=7)
-```
-
-Long input is split at punctuation-aware boundaries, synthesized chunk by
-chunk, and joined with controlled pauses. This bounds memory; it is not one
-globally planned pass or acoustic streaming. See [deployment](docs/DEPLOYMENT.md)
-for controls, hardware interpretation, and format support.
-
-## Architecture
-
-Inflect v2 is a compact VITS-family end-to-end generator:
-
-```mermaid
-flowchart LR
-  A["English text"] --> B["Normalization + phonemes"]
-  B --> C["Transformer text encoder"]
-  C --> D["Duration + latent speech model"]
-  D --> E["Residual coupling flow"]
-  E --> F["Alias-reduced 24 kHz decoder"]
-  F --> G["Mono waveform"]
-```
-
-The deployed path includes an English normalization and phoneme frontend,
-transformer text encoder, stochastic duration predictor, monotonic alignment,
-latent-variable speech generation, residual coupling flows, and an integrated
-alias-reduced neural waveform decoder. Micro allocates more capacity to hidden
-and decoder width; Nano preserves the same deployment contract with a narrower
-network.
-
-Inflect v2 is an **open-weight** release. Deployable weights, inference code,
-frontend code, evaluation artifacts, and integrity hashes are public. Private
-corpus construction and full optimization infrastructure are not included.
-
-## Scope
-
-**Supported**
-
-- local PyTorch FP32 inference on CPU and CUDA;
-- ONNX Runtime inference for published ONNX packages;
-- one fixed English male voice per model;
-- deterministic seeds, speaking speed, and delivery variation;
-- punctuation-aware long-text chunking;
-- complete waveform generation through a Python API and CLI.
-
-**Not claimed**
-
-- voice cloning, selectable speakers, female voices, or multilingual speech;
-- acoustic streaming or measured time-to-first-audio;
-- GGUF, Core ML, TFLite, FP16, or integer-quantized exports;
-- use for medical, legal, emergency, or accessibility-critical communication.
-
-## Documentation
-
-| Document | Purpose |
-| --- | --- |
-| [Deployment guide](docs/DEPLOYMENT.md) | Install, controls, long text, measured CPU behavior, and export status |
-| [Evaluation](docs/EVALUATION.md) | Protocols, metrics, comparison policy, and reproducibility |
-| [Architecture](docs/ARCHITECTURE.md) | Shipped inference path and parameter accounting |
-| [Technical report](docs/INFLECT_V2_TECHNICAL_REPORT.md) | Compact system and evaluation report |
-| [Language and fixed-voice adaptation](finetune/README.md) | Prepare data, audit splits, train, resume, evaluate, and export adapted models |
-| [Release notes](docs/INFLECT_V2_RELEASE_NOTES_20260721.md) | Frozen v2 capabilities, results, and limitations |
-| [Project structure](PROJECT_STRUCTURE.md) | Public code, research code, and release boundaries |
-| [Contributing](CONTRIBUTING.md) | Reproducible bug reports and contribution standards |
-| [Security](SECURITY.md) | Private vulnerability reporting and responsible use |
-
-## v1
+**[Windows and Linux setup, CUDA, Micro and Atom](docs/v3/getting-started.md)**
+&nbsp;&middot;&nbsp; **[Troubleshooting](docs/v3/getting-started.md#troubleshooting)**
 
 <details>
-<summary>Legacy Inflect Nano v1</summary>
+<summary><strong>Use Mini's optimized CUDA runtime</strong></summary>
 
-[Inflect-Nano-v1](https://huggingface.co/owensong/Inflect-Nano-v1) remains
-available for reproducibility and historical comparison. Inflect v2 is the
-recommended family for new integrations. v1 is not mixed into the v2 runtime,
-documentation, or install path.
+Start in a separate Python 3.12 environment with a compatible NVIDIA driver.
+After downloading and entering the complete Mini package:
+
+```sh
+python -m pip install -r core/requirements-cuda.txt
+python run.py speech --device cuda --runtime cuda-source --profile base --voice cassidy --text "A small idea can become something worth hearing." --subtype PCM_16 --output ../mini-cuda.wav
+```
+
+The optimized runtime uses the same synthesis-core weights. Warm-up, loading
+and text processing still matter. The CPU recipe is not a CUDA installation.
 
 </details>
 
-## License and contact
+## Make speech your own
 
-Original Inflect code and released weights are Apache-2.0. Bundled third-party
-components retain their own notices. Designed and developed independently by
-**Owen Song**.
+### Reference-voice tuning
 
-- Community: [Inflect Discord](https://discord.gg/CVJYedvzvp)
-- Discord: `b111ue`
-- Professional inquiries: [owen.aw.song@gmail.com](mailto:owen.aw.song@gmail.com)
+Create a reusable voice profile from an authorized **5-15 second recording**,
+then generate new text with that profile. The reference is used for enrollment;
+you do not need to supply it for every generation.
 
-## Citation
+Voice Tuner adapts the voice toward the reference. Resemblance varies; it is
+**not a promise of an exact speaker clone or automatic accent transfer**.
+Enrollment uses separate components and has its own supported environment.
 
-```bibtex
-@software{song2026inflectv2,
-  author = {Owen Song},
-  title = {Inflect v2: Complete Local Text-to-Waveform TTS at 3.96M and 9.36M Parameters},
-  year = {2026},
-  url = {https://github.com/owenawsong/Inflect}
-}
+**[Voice Tuner setup and commands](docs/v3/features.md#reference-voice-tuning)**
+
+### Vocal-event tags
+
+Add short vocal events between speech segments:
+
+```text
+You really surprised me. [laugh] That was a good one.
 ```
+
+The optional event component generates learned non-speech performances and
+assembles them with speech. Performances have limited variation. These are
+event controls, not angry, happy, whisper or other emotion/style conditioning.
+Use the event guide for the supported voices, tag spellings and runtime.
+
+**[Event setup and release coverage](docs/v3/features.md#vocal-event-tags)**
+
+### Optional 48 kHz enhancement
+
+Native **24 kHz is the default**. A separate compact **2.85M-parameter enhancer**
+can produce 48 kHz output without replacing the speech backbone.
+
+Choose by ear: neither output is universally better. A higher sample rate alone
+does not establish higher quality.
+
+**[Native 24 kHz](https://huggingface.co/owensong/Inflect-Mini-v3/resolve/main/media/mini-cassidy.wav)**
+&nbsp;&middot;&nbsp; **[The same generation, enhanced to 48 kHz](https://huggingface.co/owensong/Inflect-Mini-v3/resolve/main/media/mini-cassidy-48k.wav)**
+&nbsp;&middot;&nbsp; **[Enhancement command](docs/v3/features.md#48-khz-enhancement)**
+
+## Benchmarks
+
+Measured speech quality, intelligibility and speed answer different questions.
+The following results describe **published Mini native 24 kHz base speech**,
+not tuned voices, event performances or enhanced output.
+
+| Measure | Mini result | What was measured |
+| :--- | ---: | :--- |
+| **Average WER** | **0.739%** | 1,688 Open TTS evaluation texts per voice, all six voices; self-run |
+| **UTMOSv2** | **3.917** | 180 clips, 30 per voice |
+| **UTMOS22Strong** | **4.479** | The same 180-clip panel |
+| **Warm GPU throughput** | **162.1x real time** | RTX 5090, optimized CUDA; small 12-render probe |
+| **Warm CPU throughput** | **1.81x real time** | Ryzen 9 3900X, 2 Torch threads; small 12-render probe |
+
+The WER result is **not an official leaderboard placement or an independent
+held-out evaluation**. Quality predictors are not human ratings. CPU and GPU
+results use different systems and runtime paths; they are not a controlled
+hardware speedup comparison or a latency guarantee.
+
+**[Protocols, per-voice WER, exact scope and raw evidence](docs/v3/evaluation.md)**
+
+## Built to run locally
+
+After downloading dependencies and model assets, preset speech generation stays
+on your machine. No hosted generation API is required. Reference enrollment
+has separate downloads and license requirements.
+
+**Open weights and runnable inference.** Inflect-owned code and weights are
+**[Apache 2.0](LICENSE)**. Third-party components keep their own terms and
+notices. The full training pipeline, corpus-generation systems and training
+data are not part of this release.
+
+English is the published language. Check unusual names, numbers and long text
+for your application. Do not assume streaming, mobile exports, exact cloning
+or general emotion tags from the availability of local inference.
+
+## Documentation and earlier releases
+
+| Guide | Start here |
+| :--- | :--- |
+| [Installation and first generation](docs/v3/getting-started.md) | Windows, Linux, CUDA, all three model sizes |
+| [Optional features](docs/v3/features.md) | Voice profiles, event components and 48 kHz output |
+| [Evaluation](docs/v3/evaluation.md) | WER, quality predictors and speed protocols |
+| [Release scope](docs/v3/release.md) | Packages, licenses and compatibility boundaries |
+| [Inflect v2 archive](docs/v2/README.md) | Existing Micro/Nano v2 instructions and results |
+| [Inflect v1](https://huggingface.co/owensong/Inflect-Nano-v1) | Original release |
+
+The original `inflect/` library and v2 examples in this repository remain for
+earlier integrations. **Use the v3 model packages above for v3 inference**;
+do not mix v2 runtime commands with v3 checkpoints.
+
+## Built by Owen Song
+
+**[Community Discord](https://discord.gg/CVJYedvzvp)**
+&nbsp;&middot;&nbsp; **Discord: `blue.os`**
+&nbsp;&middot;&nbsp; **[owen.aw.song@gmail.com](mailto:owen.aw.song@gmail.com)**
+
+Found a pronunciation, setup or integration problem? Open an
+[issue](https://github.com/owenawsong/Inflect/issues/new/choose) with the text,
+voice, model revision, settings and hardware. Please do not attach private
+recordings, credentials or voice profiles without permission.

@@ -1,31 +1,39 @@
 name: Bug report
-description: Report a reproducible Inflect v2 inference or integration problem.
+description: Report an Inflect setup, speech, feature or integration problem.
 title: "[Bug]: "
 labels: ["bug"]
 body:
   - type: dropdown
     id: model
     attributes:
-      label: Model
+      label: Model or surface
       options:
-        - Inflect-Micro-v2
-        - Inflect-Nano-v2
-        - Inflect v2 Space
-        - GitHub examples or documentation
+        - Inflect Mini v3
+        - Inflect Micro v3
+        - Inflect Atom v3
+        - Inflect v3 playground
+        - Voice Tuner or event component
+        - GitHub documentation
+        - Legacy Inflect v2 or v1
     validations:
       required: true
   - type: input
     id: revision
     attributes:
-      label: Revision
-      description: Hugging Face commit, Git commit, or package version.
-      placeholder: Commit hash or version
+      label: Exact model or Git revision
+      description: Include the Hugging Face commit, Git commit, or package version.
     validations:
       required: true
+  - type: input
+    id: voice
+    attributes:
+      label: Voice and output mode
+      placeholder: "Cassidy / native 24 kHz / base / CPU"
   - type: textarea
     id: command
     attributes:
-      label: Exact command or code
+      label: Exact input and command
+      description: Include the spoken text and flags, without secrets or private data.
       render: shell
     validations:
       required: true
@@ -39,21 +47,21 @@ body:
     id: actual
     attributes:
       label: Actual behavior
-      description: Include the full error and a short non-sensitive audio sample when relevant.
+      description: Include the error and a short non-sensitive generated audio sample if useful.
     validations:
       required: true
   - type: textarea
     id: environment
     attributes:
       label: Environment
-      description: OS, Python, PyTorch, CPU/GPU, and available memory.
+      description: OS, Python, PyTorch, CPU/GPU and available memory. For the playground, include browser and any displayed queue/error message.
       render: text
     validations:
       required: true
   - type: checkboxes
     id: privacy
     attributes:
-      label: Data check
+      label: Privacy check
       options:
-        - label: I removed tokens, private recordings, and other sensitive data.
+        - label: I removed credentials, private recordings and voice profiles from this report.
           required: true

@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Try Inflect v3
+    url: https://huggingface.co/spaces/owensong/Inflect-v3
+    about: Generate speech and compare Mini, Micro and Atom in the browser.
   - name: Inflect community
     url: https://discord.gg/CVJYedvzvp
     about: Ask usage questions and discuss local integrations.

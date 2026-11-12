@@ -1,23 +1,32 @@
 # Inflect documentation
 
-## Release documentation
+## Current release: v3
 
-These files define the current Inflect v2 public contract:
+- [Project overview and model selection](../README.md)
+- [Installation and first generation](v3/getting-started.md)
+- [Voice Tuner, event components and enhancement](v3/features.md)
+- [Evaluation protocols and measurements](v3/evaluation.md)
+- [Release scope, parameter accounting and licenses](v3/release.md)
 
-- [Deployment](DEPLOYMENT.md)
-- [Evaluation](EVALUATION.md)
-- [Architecture](ARCHITECTURE.md)
-- [Technical report](INFLECT_V2_TECHNICAL_REPORT.md)
-- [Release notes](INFLECT_V2_RELEASE_NOTES_20260721.md)
-- [Publishing policy](../PUBLISHING.md)
-- [Security policy](../SECURITY.md)
+Use the complete Hugging Face model package for v3 inference. The original
+repository library and older examples are v1/v2 interfaces.
 
-## Historical research records
+## Earlier releases
 
-Other dated files in this directory preserve architecture gates, failed
-branches, listening-test notes, and release preparation. They are useful for
-provenance but may contain superseded metrics, internal paths, or experimental
-interfaces. Do not treat an older plan as deployment documentation.
+- [V2 overview, installation and measurements](v2/README.md)
+- [V2 deployment](DEPLOYMENT.md)
+- [V2 evaluation](EVALUATION.md)
+- [V2 architecture](ARCHITECTURE.md)
+- [V2 technical report](INFLECT_V2_TECHNICAL_REPORT.md)
+- [V2 release notes](INFLECT_V2_RELEASE_NOTES_20260721.md)
 
-The root [README](../README.md), the release documents above, and the exact
-Hugging Face model package are authoritative for Inflect v2.
+Historical research records and dated plans may describe abandoned designs,
+internal paths or experimental interfaces. They are not current deployment
+instructions. Do not mix their claims or benchmark results with v3.
+
+## Project policies
+
+- [Security](../SECURITY.md)
+- [Contributing](../CONTRIBUTING.md)
+- [License](../LICENSE)
+- [Notices](../NOTICE)
