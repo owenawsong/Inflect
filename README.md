@@ -33,7 +33,7 @@ before installing. Compare models, switch voices, and download your own results.
 | Native output | 24 kHz | 24 kHz | 24 kHz |
 | Optional 48 kHz enhancement | Yes | Not included | Not included |
 | Reference-voice tuning | Yes | Not included | Not included |
-| Optional vocal events | Yes | Not included | Not included |
+| Optional vocal events | 8 tags, all 6 voices | Not included | Not included |
 | Download | [Mini package](https://huggingface.co/owensong/Inflect-Mini-v3/tree/main) | [Micro package](https://huggingface.co/owensong/Inflect-Micro-v3/tree/main) | [Atom package](https://huggingface.co/owensong/Inflect-Atom-v3/tree/main) |
 
 These are **learned synthesis-core counts**, not total installation size or RAM.
@@ -114,7 +114,11 @@ Enrollment uses separate components and has its own supported environment.
 
 ### Vocal-event tags
 
-Add short vocal events between speech segments:
+All six Mini voices support eight short vocal events between speech segments:
+
+`[laugh]` · `[sigh]` · `[gasp]` · `[cough]` · `[yawn]` · `[inhale]` · `[exhale]` · `[clear_throat]`
+
+`[throat_clear]` is also accepted. The local event command runs on CPU at native 24 kHz.
 
 ```text
 You really surprised me. [laugh] That was a good one.

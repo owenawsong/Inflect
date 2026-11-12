@@ -36,15 +36,34 @@ them with speech. It does not make the speech before or after the tag angry,
 happy, whispered or otherwise emotionally conditioned. Available performances
 have limited variation.
 
-The presently published package documents `[laugh]`, `[sigh]`, `[gasp]` and
-`[cough]` for **Cassidy, CPU, native 24 kHz**. Use the package's event guide for
-its exact supported coverage; local candidate bundles are not automatically
-part of a public download.
+**Eight tags are available across all six voices:** Cassidy, Hope, Sophia,
+James, Jasper and Mark. The local event path uses **CPU, native 24 kHz**.
+
+`[laugh]` · `[sigh]` · `[gasp]` · `[cough]` · `[yawn]` · `[inhale]` · `[exhale]` · `[clear_throat]`
+
+`[throat_clear]` is an alias for `[clear_throat]`. Events use voice-specific
+learned performances and calibrated playback levels. A seed selects among
+available takes; these are a small performance bank, not unlimited new
+performances or emotion conditioning.
+
+**Already downloaded Mini?** Refresh the complete package before using the
+new tags; older snapshots contain only the original four Cassidy events.
+
+```sh
+hf download owensong/Inflect-Mini-v3 --local-dir inflect-mini-v3
+cd inflect-mini-v3
+python verify_release.py
+```
+
+Then install the event dependencies and generate:
 
 ```sh
 python -m pip install -r extras/events/component/requirements-cpu.txt
 python run.py events --voice cassidy --profile base --text "You really surprised me. [laugh] That was a good one." --output ../mini-laugh.wav
 ```
+
+Change `--voice cassidy` to any of the other five voice IDs to use their
+event performances. For example, use `[yawn]` with `--voice hope`.
 
 The event command does not apply the speech enhancer. Event component parameters
 are additional to Mini's core count.
