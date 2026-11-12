@@ -23,6 +23,8 @@ learned synthesis core.
 **[Try the browser playground](https://huggingface.co/spaces/owensong/Inflect-v3)**
 before installing. Compare models, switch voices, and download your own results.
 
+> **Installing v3? Download a complete model package from Hugging Face.** GitHub is the project guide; the `inflect/` folder and old examples are retained for v1/v2. Do not use those with v3 weights. **[Download Mini, Micro or Atom and find your first command](docs/v3/downloads.md).**
+
 ## Choose your model
 
 | | **[Mini](https://huggingface.co/owensong/Inflect-Mini-v3)** | **[Micro](https://huggingface.co/owensong/Inflect-Micro-v3)** | **[Atom](https://huggingface.co/owensong/Inflect-Atom-v3)** |
@@ -116,7 +118,7 @@ Enrollment uses separate components and has its own supported environment.
 
 All six Mini voices support eight short vocal events between speech segments:
 
-`[laugh]` · `[sigh]` · `[gasp]` · `[cough]` · `[yawn]` · `[inhale]` · `[exhale]` · `[clear_throat]`
+`[laugh]` Â· `[sigh]` Â· `[gasp]` Â· `[cough]` Â· `[yawn]` Â· `[inhale]` Â· `[exhale]` Â· `[clear_throat]`
 
 `[throat_clear]` is also accepted. The local event command runs on CPU at native 24 kHz.
 
@@ -129,7 +131,7 @@ assembles them with speech. Performances have limited variation. These are
 event controls, not angry, happy, whisper or other emotion/style conditioning.
 Use the event guide for the supported voices, tag spellings and runtime.
 
-**[Event setup and release coverage](docs/v3/features.md#vocal-event-tags)**
+**[Listen to event tags with surrounding speech](https://huggingface.co/owensong/Inflect-Mini-v3#event-tags-a-little-more-character)** &nbsp;&middot;&nbsp; **[Event setup and release coverage](docs/v3/features.md#vocal-event-tags)**
 
 ### Optional 48 kHz enhancement
 
