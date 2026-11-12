@@ -1,0 +1,35 @@
+{
+  "schema": "inflect-mini-v3-model-api-verification-v1",
+  "status": "passed",
+  "scope": "Local CPU model bridge, checkpoint, vocabulary migration and model-core export tests; no language-quality or CUDA claim",
+  "tests": {
+    "passed": 41,
+    "failed": 0,
+    "warnings": 22,
+    "elapsed_seconds": 99.63,
+    "python": "3.12.11",
+    "torch": "2.6.0+cu124",
+    "device": "cpu",
+    "cuda_visible_devices": ""
+  },
+  "source_sha256": {
+    "model.py": "f5655cfd80c8e0528d79048d800624a9d86f63db46be0e20b99b912192c240d5",
+    "checkpoint.py": "e2ac2846bf02f2b9e770e60336463a6c5bd2caf4294951cace3a2b9d1c60b1f5",
+    "public_base_weights": "8460e7d54a2fbf7fb54b3c7be7569c493c852de9a2aa1a0fd9fd9a099de581ed"
+  },
+  "verified": [
+    "34310790 public core parameters strictly reconstructed",
+    "all-six-voice exact public CPU waveform parity",
+    "supplied integer duration labels preserved without rounding or relabeling",
+    "public predicted duration ties-to-even rounding then minimum-one-frame clamp",
+    "frozen acoustic modules pass waveform-STFT gradients into text features",
+    "enabled acoustic bridge and generator receive gradients",
+    "native178 factory retained with explicit reuse of unmapped IDs only",
+    "deterministic new embedding row initialization and explicit old-phone row copying",
+    "existing mappings and other embedding rows remain bit-identical during migration",
+    "migration replay and optimizer checkpoint roundtrip",
+    "extended-vocabulary public-loader export/import waveform parity",
+    "source model unchanged and existing outputs not overwritten"
+  ],
+  "handoff": "API_HANDOFF.md"
+}

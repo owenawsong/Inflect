@@ -1,0 +1,10 @@
+# Reproduction snapshot, not a claim that other declared versions were tested.
+# Install the appropriate PyTorch CPU/CUDA build separately for your machine.
+# CUDA smoke used torch 2.6.0+cu124 on Windows 11 / RTX 3060.
+# A separate CPU inference benchmark used torch 2.11.0+cpu.
+transformers==5.2.0
+numpy==1.26.4
+scipy==1.17.1
+soundfile==0.13.1
+phonemizer-fork==3.3.2
+espeakng-loader==0.2.4

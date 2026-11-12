@@ -118,7 +118,7 @@ Enrollment uses separate components and has its own supported environment.
 
 All six Mini voices support eight short vocal events between speech segments:
 
-`[laugh]` Â· `[sigh]` Â· `[gasp]` Â· `[cough]` Â· `[yawn]` Â· `[inhale]` Â· `[exhale]` Â· `[clear_throat]`
+`[laugh]` &middot; `[sigh]` &middot; `[gasp]` &middot; `[cough]` &middot; `[yawn]` &middot; `[inhale]` &middot; `[exhale]` &middot; `[clear_throat]`
 
 `[throat_clear]` is also accepted. The local event command runs on CPU at native 24 kHz.
 
@@ -166,6 +166,18 @@ hardware speedup comparison or a latency guarantee.
 
 **[Protocols, per-voice WER, exact scope and raw evidence](docs/v3/evaluation.md)**
 
+## Adapt Mini to your language
+
+The **[Mini v3 adaptation toolkit](finetune_v3/README.md)** provides phone-coverage
+audits, aligned-data preparation, selective fine-tuning, resumable checkpoints
+and separate model export. It is compatible with the native Mini architecture,
+not the older v2 VITS trainer.
+
+**[Start with the complete language-adaptation guide](docs/v3/language-adaptation/index.md).**
+The included local smoke workflow has been tested through GPU training, resume,
+export and generation. Real recordings still need reviewed external phone
+alignment. A passing smoke is not evidence of new-language speech quality.
+
 ## Built to run locally
 
 After downloading dependencies and model assets, preset speech generation stays
@@ -188,6 +200,8 @@ or general emotion tags from the availability of local inference.
 | [Installation and first generation](docs/v3/getting-started.md) | Windows, Linux, CUDA, all three model sizes |
 | [Optional features](docs/v3/features.md) | Voice profiles, event components and 48 kHz output |
 | [Evaluation](docs/v3/evaluation.md) | WER, quality predictors and speed protocols |
+| [Single-thread CPU measurement](docs/v3/single-thread-cpu.md) | Complete-utterance latency, frontend scope and raw timings |
+| [Mini v3 language adaptation](docs/v3/language-adaptation/index.md) | Coverage, aligned recordings, training, resume and deployment |
 | [Release scope](docs/v3/release.md) | Packages, licenses and compatibility boundaries |
 | [Inflect v2 archive](docs/v2/README.md) | Existing Micro/Nano v2 instructions and results |
 | [Inflect v1](https://huggingface.co/owensong/Inflect-Nano-v1) | Original release |
@@ -206,3 +220,4 @@ Found a pronunciation, setup or integration problem? Open an
 [issue](https://github.com/owenawsong/Inflect/issues/new/choose) with the text,
 voice, model revision, settings and hardware. Please do not attach private
 recordings, credentials or voice profiles without permission.
+
