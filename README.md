@@ -6,13 +6,11 @@
 <p align="center"><strong>A complete voice. A smaller footprint.</strong><br>
 Six English voices. Three model sizes. Speech that runs on your hardware.</p>
 
-<p align="center">
-  <a href="https://huggingface.co/spaces/owensong/Inflect-v3"><img src="assets/v3/nav-playground.svg" alt="Playground" height="32"></a>
-  <a href="#quick-start"><img src="assets/v3/nav-quickstart.svg" alt="Quick start" height="32"></a>
-  <a href="https://huggingface.co/collections/owensong/inflect-v3"><img src="assets/v3/nav-models.svg" alt="Models" height="32"></a>
-  <a href="https://discord.gg/CVJYedvzvp"><img src="assets/v3/nav-discord.svg" alt="Discord" height="32"></a>
-  <a href="#benchmarks"><img src="assets/v3/nav-benchmarks.svg" alt="Benchmarks" height="32"></a>
-</p>
+<p align="center"><a href="https://huggingface.co/spaces/owensong/Inflect-v3"><img alt="Playground" src="https://img.shields.io/badge/Playground-0B2A54?style=for-the-badge&amp;logo=huggingface&amp;logoColor=white"></a>
+<a href="#quick-start"><img alt="Quick start" src="https://img.shields.io/badge/Quick_Start-1769E0?style=for-the-badge&amp;logo=gnubash&amp;logoColor=white"></a>
+<a href="https://huggingface.co/collections/owensong/inflect-v3"><img alt="Models" src="https://img.shields.io/badge/Models-FFFFFF?style=for-the-badge&amp;logo=huggingface&amp;logoColor=1769E0"></a>
+<a href="https://discord.gg/CVJYedvzvp"><img alt="Discord" src="https://img.shields.io/badge/Discord-1769E0?style=for-the-badge&amp;logo=discord&amp;logoColor=white"></a>
+<a href="#benchmarks"><img alt="Benchmarks" src="https://img.shields.io/badge/Benchmarks-0B2A54?style=for-the-badge&amp;logo=chartdotjs&amp;logoColor=white"></a></p>
 
 <p align="center"><strong>Apache 2.0</strong> &nbsp;&middot;&nbsp; <strong>Local generation</strong> &nbsp;&middot;&nbsp; <strong>Native 24 kHz</strong><br>
 Mini adds reference-voice tuning, vocal events, and optional 48 kHz enhancement.</p>
