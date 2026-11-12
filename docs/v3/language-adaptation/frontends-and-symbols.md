@@ -173,12 +173,13 @@ artifact must say so and must not advertise raw-text language support.
 The CLI now checks the actual eSpeak engine version against the version saved
 with the training frontend before raw-text synthesis proceeds. The optional
 `smoke-dataset --frontend espeak` uses fixed English (`en-us`) prompts to test
-that restore path. The parent has now passed this separate English mechanical
-chain through prepare, CUDA two updates, licensed export, and raw-text `say`,
+that restore path. Historical0.1.0 verification passed this separate English
+mechanical chain through prepare, CUDA two updates, licensed export, and raw-text `say`,
 with engine `(1, 52, 0)` matching. It is distinct from the prephonemized smoke
 and does not certify foreign-language coverage or speech quality. Independent
-wheel installation has also passed within the [documented existing-dependency
-scope](implementation-status.md#tested-base-and-installation).
+wheel installation also passed within its [documented existing-dependency
+scope](implementation-status.md#tested-base-and-installation). The separate
+[fresh0.1.1 Windows CPU result](fresh-windows-cpu-011.md) does not qualify CUDA training.
 
 Use the new label-free `coverage` command before alignment to inspect unknown
 code points and original/final frontend output. Its report can require migration

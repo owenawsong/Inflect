@@ -22,6 +22,9 @@ from .model import VOICES, load_mini, sha256
 from .checkpoint import save_checkpoint, load_checkpoint, export_model
 
 
+TRAINING_EXECUTION_PROFILE = 'native24-reflect-cat-v1'
+
+
 def atomic_json(path, value):
     path = Path(path)
     pending = path.with_suffix(path.suffix + '.pending')
@@ -148,14 +151,28 @@ def make_batch(model, row, voice, device, max_frames):
     return tokens, lengths, aln, sid, counts_t.float()[None], target
 
 
+def _reflect_center_pad(waveform, padding):
+    """STFT's reflect-center values via explicit slice/flip/cat paths."""
+    if type(padding) is not int or padding < 0 or waveform.ndim not in (1, 2):
+        raise ValueError('Expected 1D/2D waveform and nonnegative integer padding')
+    if waveform.shape[-1] <= padding:
+        raise ValueError('Reflection padding must be smaller than waveform length')
+    if padding == 0:
+        return waveform
+    return torch.cat((waveform[..., 1:padding+1].flip(-1), waveform,
+                      waveform[..., -padding-1:-1].flip(-1)), dim=-1)
+
+
 def spectral_loss(predicted, target):
     if predicted.shape != target.shape:
         raise ValueError('Waveform and target clocks must match')
     total = predicted.new_zeros(())
     for size in (256, 512, 1024):
         window = torch.hann_window(size, device=predicted.device)
-        a = torch.stft(predicted.float(), size, hop_length=size//4, window=window, return_complex=True).abs()
-        b = torch.stft(target.float(), size, hop_length=size//4, window=window, return_complex=True).abs()
+        a = torch.stft(_reflect_center_pad(predicted.float(), size//2), size,
+                       hop_length=size//4, window=window, center=False, return_complex=True).abs()
+        b = torch.stft(_reflect_center_pad(target.float(), size//2), size,
+                       hop_length=size//4, window=window, center=False, return_complex=True).abs()
         total = total + F.l1_loss(torch.log(a.clamp_min(1e-5)), torch.log(b.clamp_min(1e-5)))
         total = total + torch.linalg.vector_norm(a-b) / torch.linalg.vector_norm(b).clamp_min(1e-5)
     return total / 3
@@ -180,6 +197,13 @@ def train(options: TrainOptions):
         dataset_path = dataset_path.parent
     if root.resolve().is_relative_to(model_path) or root.resolve().is_relative_to(dataset_path):
         raise ValueError('Run output must be outside source model and prepared dataset')
+    resume_contract = None
+    if options.resume:
+        if not root.is_dir():
+            raise ValueError('Resume requires the existing run directory')
+        resume_contract = json.loads((root/'run-contract.json').read_text(encoding='utf-8'))
+        if not isinstance(resume_contract, dict) or resume_contract.get('execution_profile') != TRAINING_EXECUTION_PROFILE:
+            raise ValueError('Training execution profile mismatch or missing; start a new run instead of cross-profile resume')
     metadata, rows, dataset_sha = load_rows(dataset_path)
     torch.set_num_threads(options.threads)
     if options.device == 'cuda' and not torch.cuda.is_available():
@@ -204,15 +228,14 @@ def train(options: TrainOptions):
     config = asdict(options)
     config.update(model=str(model_path),dataset=str(dataset_path))
     contract = {k:v for k,v in config.items() if k not in ('steps','resume','output','checkpoint_every','validation_every','max_validation_clips')}
-    contract.update(dataset_sha256=dataset_sha, source_identity=model.source_identity,
+    contract.update(execution_profile=TRAINING_EXECUTION_PROFILE,
+                    dataset_sha256=dataset_sha, source_identity=model.source_identity,
                     frontend=metadata.get('frontend'), vocabulary_migration=migration,
                     validation_is_not_training_data=True)
     contract = json.loads(json.dumps(contract))
     contract_sha = hashlib.sha256(json.dumps(contract,sort_keys=True).encode()).hexdigest()
     if options.resume:
-        if not root.is_dir():
-            raise ValueError('Resume requires the existing run directory')
-        if json.loads((root/'run-contract.json').read_text(encoding='utf-8')) != contract:
+        if resume_contract != contract:
             raise ValueError('Resume contract differs: source/data/voice/groups/loss/settings changed')
     else:
         root.mkdir(parents=True, exist_ok=False)

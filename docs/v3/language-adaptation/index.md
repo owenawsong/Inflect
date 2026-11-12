@@ -47,6 +47,19 @@ English mechanical checkpoint and generated mono24 PCM16 raw-text output,
 120 native frames. This was not a fresh complete-dependency installation or a
 new-language quality test. See [exact tested scope and artifact pins](implementation-status.md).
 
+
+
+Separate **0.1.1 fresh Windows CPU qualification** subsequently passed dependency installation/provenance and the installed prepare/audit/train-one-update/export/raw-text chain. It used Python3.12.11, Torch2.6.0+cpu and eSpeak1.52.0; it is distinct from the earlier offline-target checks and does not rerun their full pytest suite. See [exact fresh-install environment, commands and limits](fresh-windows-cpu-011.md).
+
+
+The final **0.1.2** wheel passed the installed publication CPU suite:
+**219 passed, 1 skipped**, including **42 real-native cases** and **20 new
+publication cases within that total**. Strict default-four-group CUDA on
+RTX3060/Torch2.6.0+cu124 passed SMOKE1 and MAIN8, exact full checkpoint/optimizer
+comparison, and CPU export/raw-text WAV parity. These are bounded English
+mechanical checks using existing dependencies, not new-language quality or a
+fresh0.1.2 dependency installation. See [version-specific final scope](implementation-status.md#012-execution-profile-and-limits).
+
 The earlier **0.1.0/r004** installed-wheel result, including its 193-frame
 mechanical output and original wheel hash, remains separate historical evidence.
 Neither frame count is a language-quality comparison.

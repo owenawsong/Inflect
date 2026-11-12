@@ -10,9 +10,29 @@ Atom are not supported.
 Start with the [language-adaptation guide](../docs/v3/language-adaptation/index.md)
 or go directly to [command recipes](../docs/v3/language-adaptation/commands.md).
 
+## 0.1.2 Training Execution Profile
+
+Version0.1.2 expresses the existing reflection values through explicit
+slice/flip/concatenation in the training bridge and spectral-loss path. Public
+inference classes, source weights and the serialized inference schema remain
+unchanged. The source-import and exact mapped-phone protections remain in place.
+
+New training contracts pin `execution_profile=native24-reflect-cat-v1`.
+Resume requires that exact profile, the complete original contract and matching
+checkpoint/controller sidecars. Missing, older or altered profiles reject before
+model/checkpoint loading; there is no cross-version optimizer-resume waiver.
+Do not edit old contracts to bypass this check. Valid legacy checkpoints may
+still be exported under their original verified contracts, or exported weights
+may initialize a new run; neither operation resumes the old optimizer.
+
+See [version-specific qualification](QUALIFICATION.md) for actual tested groups,
+environment and limits. Speaker-only CUDA evidence must not be generalized to
+the default four-group configuration. The historical checks below keep their
+original version/device scope.
+
 ## 0.1.1 Release Candidate
 
-Version 0.1.1 adds source-only verified model imports without deleting existing
+Historical version 0.1.1 adds source-only verified model imports without deleting existing
 bytecode caches, and exact alignment binding for explicitly mapped phone
 codepoints. See the [changelog](CHANGELOG.md) and
 [security boundary](../docs/v3/language-adaptation/security-notes.md).
@@ -83,7 +103,10 @@ tiny mechanical smoke below.
 
 The fixture contains six self-generated English Cassidy examples and their
 exact synthesis clocks. It tests plumbing, not alignment of human recordings
-or foreign-language quality. Use new output names outside the source package:
+or foreign-language quality. The four-group CUDA commands below are illustrative,
+not a qualified0.1.2 default-group recipe. Do not infer admission or successful
+execution from these examples; check [version-specific scope](QUALIFICATION.md).
+Use new output names outside the source package:
 
 ```sh
 mkdir adaptation-work
@@ -106,7 +129,7 @@ python -B -m finetune_v3 smoke-dataset --model ./inflect-mini-v3 --output ./adap
 Train/export that fixture under separate output names to exercise raw-text
 `say`. Historical 0.1.0 verification passed the eSpeak `(1, 52, 0)` CUDA
 two-update/resume-four and continuous-four runs, with small nondeterminism,
-not bit-exact equivalence. Current 0.1.1 installed-package CPU export/raw-text
+not bit-exact equivalence. Historical 0.1.1 installed-package CPU export/raw-text
 checks passed with the saved default Cassidy target and 120-frame mono24 output;
 they do not constitute a new CUDA-training qualification. See
 [tested scope and gates](../docs/v3/language-adaptation/implementation-status.md).
@@ -117,11 +140,7 @@ continuation regression, reported **180 passed, 1 skipped, 22 warnings in
 reported 138 passed/1 skipped; v2 regression reported 39 passed. Source and
 published weights were unchanged. These are software checks, not new-language
 quality results. Installed-wheel evidence above applies to r004: 16 files,
-including the Apache LICENSE, with no model or audio assets. Its SHA256 is:
-
-```text
-13281c2fcb8ed18445d9bf386b732af21f3fc0f77882d1f8e80627cb925942e9
-```
+including the Apache LICENSE, with no model or audio assets. Its artifact pins remain in the version-specific guide evidence.
 
 ## Export and Evaluate
 

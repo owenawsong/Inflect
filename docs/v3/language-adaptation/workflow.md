@@ -33,8 +33,10 @@ exact synthesis clocks with explicit mechanical-only acknowledgment. It is not
 an aligner for arbitrary recordings and is never foreign-language proof.
 Its default is prephonemized. Optional `--frontend espeak` uses fixed `en-us`
 English prompts to exercise real G2P and raw-text restoration. That separate
-mechanical path has now passed prepare, CUDA two updates, contract-validated
-export with licenses, and raw-text `say`; it is not foreign-language proof.
+historical 0.1.0 mechanical path passed prepare, CUDA two updates,
+contract-validated export with licenses, and raw-text `say`. This does not
+qualify0.1.1 CUDA training; see the [version-specific tested scope](implementation-status.md).
+It is not foreign-language proof.
 
 ## Prepared Data Contract
 

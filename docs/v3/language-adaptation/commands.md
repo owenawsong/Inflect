@@ -15,6 +15,15 @@ python -m finetune_v3 --help
 ```
 
 The installed `inflect-v3-adapt` console entry point uses the same parser.
+
+Version0.1.2 binds `native24-reflect-cat-v1` in each new training controller
+contract. Resume requires that exact execution profile plus all original
+source/data/options and checkpoint-sidecar checks. Missing/old/altered profiles
+are rejected before weight loading; there is no override flag or cross-version
+resume waiver. A valid legacy checkpoint may still be exported with its original
+strict hashes and notices, or initialize a NEW run from exported weights. That
+does not continue an old optimizer/controller. Do not edit old metadata to force
+compatibility. See [version-specific scope](../../../finetune_v3/QUALIFICATION.md).
 See the [tested dependency snapshot](../../../finetune_v3/requirements-tested.txt)
 for the existing verification environment; choose the CPU/CUDA Torch build
 separately. The snapshot does not certify a fresh complete environment.
@@ -29,6 +38,19 @@ installation, strict export and raw-text inference from an unrelated Temp CWD.
 Its 120-frame mono24 PCM16 output is a mechanical check with existing qualified
 dependencies, not a fresh environment or new-language quality result. See the
 [version-specific test scope](implementation-status.md#staged-011-coverage).
+
+
+Separate **0.1.1 fresh Windows CPU qualification** subsequently passed dependency installation/provenance and the installed prepare/audit/train-one-update/export/raw-text chain. It used Python3.12.11, Torch2.6.0+cpu and eSpeak1.52.0; it is distinct from the earlier offline-target checks and does not rerun their full pytest suite. See [exact fresh-install environment, commands and limits](fresh-windows-cpu-011.md).
+
+
+The final **0.1.2** wheel passed the installed publication CPU suite:
+**219 passed, 1 skipped**, including **42 real-native cases** and **20 new
+publication cases within that total**. Strict default-four-group CUDA on
+RTX3060/Torch2.6.0+cu124 passed SMOKE1 and MAIN8, exact full checkpoint/optimizer
+comparison, and CPU export/raw-text WAV parity. These are bounded English
+mechanical checks using existing dependencies, not new-language quality or a
+fresh0.1.2 dependency installation. See [version-specific final scope](implementation-status.md#012-execution-profile-and-limits).
+
 First obtain and verify the [complete pinned base](pinned-base.md). If coverage needs additions, construct the [coordinated vocabulary/map/migration](coordinated-vocabulary.md). Choose the separate [prephonemized or eSpeak end-to-end branch](two-input-workflows.md) before alignment; only the latter produces a raw-text export.
 
 Replace `./inflect-mini-v3` with the verified local Mini package if it is elsewhere.

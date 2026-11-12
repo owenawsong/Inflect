@@ -34,3 +34,8 @@ The full CPU suite passed 199 tests, with one platform-dependent skip, including
 export and raw-text checks using existing qualified dependencies. These checks
 do not establish new-language quality or a fresh dependency environment. See
 [tested coverage](implementation-status.md#staged-011-coverage).
+
+
+Separate **0.1.1 fresh Windows CPU qualification** subsequently passed dependency installation/provenance and the installed prepare/audit/train-one-update/export/raw-text chain. It used Python3.12.11, Torch2.6.0+cpu and eSpeak1.52.0; it is distinct from the earlier offline-target checks and does not rerun their full pytest suite. See [exact fresh-install environment, commands and limits](fresh-windows-cpu-011.md).
+
+The strict0.1.1 CUDA backward failure remains a failure; CPU qualification is not a CUDA workaround or a language-quality approval. Final-wheel0.1.2 strict model CUDA checks passed the default four-group configuration within the documented Cassidy/English-mechanical scope; this is not a new-language quality claim.

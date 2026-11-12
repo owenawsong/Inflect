@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.1.2 - Training Execution Profile (2026-11-12)
+
+- Express the existing multi-resolution STFT reflect-center values through
+  slice/flip/concatenation and center=False, retaining FFT/hop/window/objective.
+- Select an equivalent parameterless `(1,0)` left-reflection pad only at the
+  recognized training-bridge generator path; unexpected type/padding/state fails
+  closed. No global Torch replacement, source-weight, public inference class or
+  inference schema change.
+- Bind `native24-reflect-cat-v1` in new controller contracts. Reject missing,
+  old or altered profiles before weight loading/updates; matching profiles still
+  require exact full-contract/sidecar equality. Legacy inference export remains
+  subject to its original strict contract and checkpoint checks, not a resume waiver.
+- Final metadata wheel70d94a passed installed publication CPU219/1skip,
+  including42 native and20 new publication cases. Strict default-four-group
+  CUDA SMOKE1/MAIN8 passed with exact full checkpoint/optimizer payload and CPU
+  export/raw-text WAV equality. Group trainability is not a claim of nonzero
+  gradients for every selected parameter. Existing dependencies and English
+  mechanical fixtures only; no fresh0.1.2 environment or language-quality claim.
+- Retain private-wheel2d402b speaker-only results, strict0.1.1 CUDA failure and
+  separate fresh0.1.1 Windows CPU qualification as historical evidence, not
+  additional tests/updates or relabelled final-wheel results.
+
+See [version-specific scope](QUALIFICATION.md) and the guide's
+[limits](../docs/v3/language-adaptation/implementation-status.md#012-execution-profile-and-limits).
+No tests are relabeled from 0.1.1 and no gradient/checkpoint tolerance is introduced.
+
 ## 0.1.1 - Verified CPU Fixes (2026-11-12)
 
 - Load inventoried model modules from freshly hash-verified source bytes instead

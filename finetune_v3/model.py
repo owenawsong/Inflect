@@ -206,6 +206,30 @@ def contract_digest(value) -> str:
     return digest.hexdigest()
 
 
+class _TrainingLeftReflectionPad1d(nn.Module):
+    """Exact (1,0) reflect values without reflective-padding backward."""
+
+    padding = (1, 0)
+
+    def forward(self, x):
+        require(x.ndim in (2, 3) and x.shape[-1] >= 2,
+                'Training left-reflection pad requires 2D/3D input of length >=2')
+        return torch.cat((x[..., 1:2], x), dim=-1)
+
+
+def _install_training_generator_padding(model):
+    path = 'generator.reflection_pad'
+    layer = dict(model.named_modules()).get(path)
+    require(type(layer) is nn.ReflectionPad1d and layer.padding == (1, 0),
+            'Unrecognized training generator reflection padding at ' + path)
+    require(not layer.state_dict() and not layer._parameters and not layer._buffers and not layer._modules
+            and not layer._forward_hooks and not layer._forward_pre_hooks and not layer._backward_hooks
+            and not layer._backward_pre_hooks
+            and 'forward' not in layer.__dict__, 'Unexpected state/hooks on ' + path)
+    replacement = _TrainingLeftReflectionPad1d().train(layer.training)
+    model.generator.reflection_pad = replacement
+
+
 class MiniV3Bridge(nn.Module):
     """Trainable v3 modules with unchanged full-utterance clocks and conditioning.
 
@@ -217,6 +241,7 @@ class MiniV3Bridge(nn.Module):
     def __init__(self, root: Path, identity: dict, native: nn.Module):
         super().__init__()
         self.text, self.bridge, self.generator = native.text, native.bridge, native.generator
+        _install_training_generator_padding(self)
         self.model_dir, self.source_identity = root, deepcopy(identity)
         self.styles, self.vocab = _clone_cpu(native.styles), deepcopy(native.vocab)
         self.max_frames = native.max_frames

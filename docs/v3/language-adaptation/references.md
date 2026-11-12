@@ -39,6 +39,7 @@ was read-only; no account settings or public content were changed.
   final lightweight result (138 passed, 1 skipped) and separate v2 regression
   result (39 passed) are attributed with their limits
   in [implementation status](implementation-status.md).
+- [Fresh0.1.1 Windows CPU qualification](fresh-windows-cpu-011.md): separately completed dependency/provenance and five-phase installed CLI evidence; Windows/English mechanical scope only, with both setup failures retained.
 - [Tested requirements snapshot](../../../finetune_v3/requirements-tested.txt):
   versions in existing verification environments, with Torch chosen separately
   for CPU/CUDA. It is not a complete freshly downloaded environment lock.
@@ -49,7 +50,7 @@ was read-only; no account settings or public content were changed.
 - Current CLI source additionally verifies controller/checkpoint/run-contract
   binding for export and requires the saved eSpeak engine version for raw-text
   inference. The fixed-English `smoke-dataset --frontend espeak` chain now has
-  separate parent mechanical pass evidence, including raw-text output with
+  separate historical0.1.0 parent mechanical pass evidence, including raw-text output with
   matching engine `(1, 52, 0)`. It is not folded into earlier phoneme-input
   receipts or described as foreign-language quality.
 - [V2 adaptation contract](../../../finetune/CONTRACT.md) and
