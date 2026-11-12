@@ -242,6 +242,46 @@ def test_mapping_requires_final_label_binding_and_keeps_original(tmp_path):
     assert all(r["original_phones"] == "x" and r["phones"] == "a" for r in data["rows"])
 
 
+@pytest.mark.parametrize('timed', [False, True])
+def test_combining_map_binds_exact_final_phones_through_prepare_audit_and_clock(tmp_path, timed):
+    manifest, root, rows = fixture(tmp_path)
+    rules = dict(language='fr-fr', name='explicit-tone-codepoint', replacements={'X': '\u0301'})
+    for row in rows:
+        row.update(phones='aX', alignment_phones='a\u0301', phone_durations=[1, 1, 1, 1])
+        if timed:
+            row.pop('phone_durations')
+            row['alignment'] = [dict(token_id=token, start=i * .025, end=(i + 1) * .025)
+                                for i, token in enumerate([0, 1, 2, 0])]
+    write_rows(manifest, rows)
+    path = prepare(manifest, root, tmp_path / 'prepared', 'fr-fr', 'prephonemized',
+                   {'a': 1, '\u0301': 2}, 42, phone_mapping=rules, base_vocab={'a': 1})
+    prepared = load_prepared(path)
+    assert audit(path)['passed'] is True
+    for row in prepared['rows']:
+        assert row['phones'] == 'a\u0301' and row['phone_ids'] == [0, 1, 2, 0]
+        assert row['phone_durations'] == [1, 1, 1, 1] and row['sample_count'] == 2400
+
+
+def test_mapped_alignment_rejects_nfc_equivalent_but_different_final_tokens(tmp_path):
+    manifest, root, rows = fixture(tmp_path)
+    rules = dict(language='fr-fr', name='explicit-tone-codepoint', replacements={'X': '\u0301'})
+    for row in rows:
+        row.update(phones='aX', alignment_phones='\u00e1', phone_durations=[1, 1, 1, 1])
+    write_rows(manifest, rows)
+    with pytest.raises(ValueError, match='final, mapped phoneme sequence'):
+        prepare(manifest, root, tmp_path / 'prepared', 'fr-fr', 'prephonemized',
+                {'a': 1, '\u0301': 2}, 42, phone_mapping=rules)
+    assert not (tmp_path / 'prepared').exists()
+
+
+def test_unmapped_alignment_retains_existing_input_normalization(tmp_path):
+    manifest, root, rows = fixture(tmp_path)
+    for row in rows:
+        row['phones'] = '  a\t '
+    write_rows(manifest, rows)
+    assert audit(run_prepare(tmp_path, manifest, root))['passed'] is True
+
+
 def test_non_ascii_prepared_roundtrip_never_uses_windows_default_encoding(tmp_path, monkeypatch):
     manifest, root, rows = fixture(tmp_path)
     phones = "\u0250\u0281\u026a"

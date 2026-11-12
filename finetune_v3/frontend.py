@@ -105,6 +105,7 @@ class Frontend:
     Mapping schema: {"language": "fr-fr", "name": "...", "replacements": {"x": "y"}}.
     Maps are language-specific and one-codepoint to one-codepoint only. Original
     output and normalized pre-map phones are retained for coverage inspection.
+    Final mapped codepoints are not normalized again, including for alignment.
     """
     def __init__(self, language, frontend, vocab, *, phone_mapping=None, base_vocab=None):
         if not isinstance(language, str) or not language or language != language.strip():

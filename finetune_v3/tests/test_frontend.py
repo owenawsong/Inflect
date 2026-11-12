@@ -45,6 +45,18 @@ def test_explicit_phone_map_retains_source_and_does_not_recurse():
     assert front.metadata()["phone_mapping"] == rules
 
 
+def test_combining_map_output_keeps_exact_final_codepoints_and_vocab_ids():
+    rules = dict(language='fr-fr', name='explicit-tone-codepoint', replacements={'X': '\u0301'})
+    front = Frontend('fr-fr', 'prephonemized', {'a': 1, '\u0301': 2},
+                     base_vocab={'a': 1}, phone_mapping=rules)
+    encoded = front.encode('Authored test.', phones='aX')
+    assert encoded['normalized_phones'] == 'aX'
+    assert encoded['phones'] == 'a\u0301' and len(encoded['phones']) == 2
+    assert encoded['phone_ids'] == [0, 1, 2, 0]
+    assert encoded['coverage']['unknown_phones'] == []
+    assert front.encode('Authored test.', phones='aX', audit_only=True)['phones'] == encoded['phones']
+
+
 @pytest.mark.parametrize("rules", [
     {"language": "en-us", "name": "wrong-language", "replacements": {"x": "a"}},
     {"language": "fr-fr", "name": "drop", "replacements": {"x": ""}},

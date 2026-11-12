@@ -39,10 +39,17 @@ V2 `inflect-adapt` commands and VITS presets are not Mini v3 training recipes.
 
 ## Tested Installation Scope
 
-Version **0.1.0**, wheel build **r004**, generated raw-text audio from an unrelated
-Temp working directory using an isolated `--target` package installation and
-existing qualified dependencies. Output was mono24, 193 native frames. A
-freshly downloaded complete environment was not tested by that result.
+Version **0.1.1** passed the full CPU source suite: **199 passed, 1 skipped**,
+including 42 real-model cases. Its new wheel was installed offline into an
+isolated `--target` directory using existing qualified dependencies. From an
+unrelated Temp working directory, the installed CLI exported the existing
+English mechanical checkpoint and generated mono24 PCM16 raw-text output,
+120 native frames. This was not a fresh complete-dependency installation or a
+new-language quality test. See [exact tested scope and artifact pins](implementation-status.md).
+
+The earlier **0.1.0/r004** installed-wheel result, including its 193-frame
+mechanical output and original wheel hash, remains separate historical evidence.
+Neither frame count is a language-quality comparison.
 
 The tested public-core `weights.pt` SHA256 is:
 

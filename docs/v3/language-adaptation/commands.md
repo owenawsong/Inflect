@@ -21,7 +21,16 @@ separately. The snapshot does not certify a fresh complete environment.
 The original Apache `LICENSE` is included with legacy-compatible setuptools
 license-file metadata. Version 0.1.0 wheel build r004 passed raw-text generation
 from an unrelated Temp CWD with an isolated --target installation and existing
-qualified dependencies, not a freshly downloaded complete environment.
+qualified dependencies, not a freshly downloaded complete environment. That
+0.1.0/r004 result remains historical. The current 0.1.1 full CPU suite reported
+199 passed, 1 skipped, with 42 real-model cases included in those passes.
+It also passed offline isolated-target
+installation, strict export and raw-text inference from an unrelated Temp CWD.
+Its 120-frame mono24 PCM16 output is a mechanical check with existing qualified
+dependencies, not a fresh environment or new-language quality result. See the
+[version-specific test scope](implementation-status.md#staged-011-coverage).
+First obtain and verify the [complete pinned base](pinned-base.md). If coverage needs additions, construct the [coordinated vocabulary/map/migration](coordinated-vocabulary.md). Choose the separate [prephonemized or eSpeak end-to-end branch](two-input-workflows.md) before alignment; only the latter produces a raw-text export.
+
 Replace `./inflect-mini-v3` with the verified local Mini package if it is elsewhere.
 Assume `./work/adaptation` already exists. New output files/directories must not
 exist, their parents must exist, and they must be outside the source package.
@@ -192,7 +201,7 @@ python -B -m finetune_v3 smoke-dataset --model ./inflect-mini-v3 --output ./work
 It obtains the prompt phones from eSpeak, generates their corresponding English
 waveforms and exact clocks, then prepares an eSpeak-identified dataset. This
 supports a separate train/export/raw-text-restore test using new output names.
-**The English eSpeak mechanical path has now passed parent verification**:
+**Historical 0.1.0 English eSpeak mechanical verification passed**:
 six self-generated examples, prepare, CUDA two updates, contract-validated
 export with licenses, then raw-text inference. This is separate evidence from
 the earlier phoneme-input pass, not permission to use a prephonemized export as
@@ -208,7 +217,7 @@ Cassidy worked. WAV metadata was mono24, 72,000 samples, 120 native frames
 This verifies English mechanical restoration, not foreign-language alignment,
 linguistic quality, or a clean wheel installation.
 
-The parent's observed CUDA smoke used the following settings. These tiny counts
+The parent's historical 0.1.0 CUDA smoke used the following settings. These tiny counts
 and learning rate are **mechanical test settings only**, not an adaptation
 recommendation. Running them requires explicit local CUDA admission.
 

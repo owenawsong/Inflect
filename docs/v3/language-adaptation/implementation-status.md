@@ -4,7 +4,65 @@ The tools have mechanical verification on the native24 Mini architecture.
 These results establish software behavior, not Polish, multilingual, or
 perceptual quality. This page summarizes parent verification as of 2026-11-12.
 
+## Staged 0.1.1 Coverage
+
+The 0.1.1 fixes verified-source importing and exact post-map alignment binding
+have completed CPU model-inclusive, export/raw-text and installed-wheel checks.
+The heading is retained for existing links; these are actual completed checks,
+not pending integration. No new language data or language-quality claim is
+part of this update. See the [changelog](../../../finetune_v3/CHANGELOG.md) and
+[security notes](security-notes.md).
+
+| Check | Actual result and boundary |
+| --- | --- |
+| Full source suite | 199 passed, 1 skipped, 23 warnings in 139.15s pytest time; monitored child phase 141.44s |
+| Real-model cases | All 42 executed, including the new native combining-map migration/checkpoint/export regression; included in 199, not an additional total |
+| Earlier targeted and lightweight checks | 66 passed/1 skipped and 157 passed/1 skipped; overlapping component scopes, not counts to add to 199 |
+| Existing environment | Python 3.12.11, Torch 2.6.0+cu124 executed on CPU, CUDA hidden; existing qualified dependencies, not a fresh dependency install |
+| Installed CLI export | Existing English eSpeak mechanical checkpoint exported on CPU through controller/checkpoint validation, source-only imports, strict state loading and public-loader readback; no new training run |
+| Installed raw-text inference | Offline target-installed version 0.1.1, unrelated Temp CWD, saved default target Cassidy; mono24 PCM16, 120 frames/72,000 samples for A small model can still speak clearly. |
+
+Actual QA ran on 2026-11-12 from 13:19:39 to 13:22:49 UTC. The single skip was
+the existing source-symlink fixture because this OS did not permit creating test
+symlinks. Warnings concern existing SWIG type metadata and Torch weight_norm
+deprecation, not failed tests. Historical 0.1.0 results below remain separate.
+No 0.1.1 CUDA optimization or new-language qualification is asserted.
+
 ## Tested Base and Installation
+
+Current **0.1.1** wheel qualification:
+
+| Item | Tested scope |
+| --- | --- |
+| Wheel | Final metadata revision r002: inflect_mini_v3_adapt-0.1.1-py3-none-any.whl, 47,556 bytes |
+| Build | Existing setuptools 70.2.0 vendored wheel backend; no build-dependency download or environment upgrade |
+| Installation | Offline `--no-index --no-deps --no-compile --target`; existing qualified dependencies |
+| Provenance | Import resolved to the isolated target and reported package0.1.1; Torch CUDA remained uninitialized |
+| Working directory | New unrelated Temp directory, outside the source checkout |
+| Installed export/inference | Actual CPU export followed by raw-text generation, mono24 PCM16, 120 native frames |
+| Contents | 16 entries, Python bytes matched source pins, Apache LICENSE retained; no model/audio/test/dataset assets |
+| Limit | Not a fresh complete environment, platform matrix, human listening result or foreign-language quality claim |
+
+Verified 0.1.1 wheel SHA256:
+
+```text
+07c917b0dee6eb4961947ff032c0bfd5b709e7adf9b49e4e7614ed1d949272d5
+```
+
+The raw-text output was finite and below full scale. This is a functional
+contract check, not a naturalness score. The maintainer's source, phase, wheel
+and installed-output receipts identify the full-suite run as
+`toolkit-qa-011-r001`. After the reviewed README/link metadata changes, the
+distinct final wheel's offline installation, provenance, export and raw-text
+checks passed again in `toolkit-qa-011-r002`, 13:49:11-13:50:21 UTC. Python
+implementation bytes were unchanged; the full CPU suite was not rerun or
+double-counted. The earlier r001 wheel remains historical candidate evidence:
+`be9e9cf29a4f117def5c37d05694225d9c5747436032f0c7614f7a14982cc654`.
+
+### Historical 0.1.0 Installation
+
+The following **0.1.0/r004** matrix and original wheel receipt are preserved,
+not replaced by or relabelled as the 0.1.1 artifact:
 
 | Item | Tested scope |
 | --- | --- |
@@ -42,6 +100,10 @@ adapted artifact hashes for each run. Inventory validity alone is not proof
 that an arbitrary local package is the intended official base.
 
 ## CLI Integration Checks Before Promoting Examples
+
+The following integration history is for **0.1.0**, including its separate
+CUDA optimization/resume checks. It is not a new 0.1.1 CUDA qualification;
+current 0.1.1 CPU/full-model and installed-wheel checks are reported above.
 
 | Verification | Result and boundary |
 | --- | --- |
@@ -111,9 +173,10 @@ v3 [row contract](workflow.md#prepared-data-contract) and commands here.
 
 ## Remaining Release Gates
 
-1. Retain the completed combined-suite and component test receipts with the frozen
-   publication allowlist/source/wheel. Keep build r004 evidence distinct from
-   any later runtime changes.
+1. Retain the 0.1.1 source/wheel/installed-output receipts with the reviewed
+   publication allowlist. Keep 0.1.0/r004 evidence distinct. A changed package
+   README, metadata or Python source requires a rebuilt wheel and matching
+   installed-target checks; do not transfer a tested hash to changed bytes.
 2. Verify the final artifact's inventories, retained licenses, frontend identity,
    target voice, and installation on every environment actually claimed.
 3. For a new language, establish genuine external alignment, training-only
@@ -124,6 +187,5 @@ v3 [row contract](workflow.md#prepared-data-contract) and commands here.
    limitations. Retained English, other voice slots, events, tuner, enhancer,
    or multilingual behavior require their own evidence.
 
-Current work is publication preparation, not an already committed release.
 No language-quality approval follows automatically from installation or smoke
 test completion.

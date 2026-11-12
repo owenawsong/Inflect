@@ -125,7 +125,7 @@ def _audio(path, *, allow_resample, tolerance, trailing_silence_samples):
         trailing_silence_samples=trailing_silence_samples, sample_rate=SAMPLE_RATE, sample_count=target)
 
 
-def _durations(row, encoded, audio, language):
+def _durations(row, encoded, audio, language, *, mapped_phones=False):
     source = row.get("alignment_source")
     require(isinstance(source, dict) and source.get("kind") in
             ("human", "external_forced_alignment", "dataset_alignment"),
@@ -134,7 +134,10 @@ def _durations(row, encoded, audio, language):
             "Alignment provenance needs matching language and nonempty source")
     require(source.get("base_predicted", False) is False, "English/base predictions are not duration labels")
     bound_phones = row.get("alignment_phones", row.get("phones", row.get("phonemes")))
-    require(isinstance(bound_phones, str) and normalize_text(bound_phones) == encoded["phones"],
+    # Explicit maps bind to final codepoints, not a second NFC/whitespace transform.
+    matches = (bound_phones == encoded["phones"] if mapped_phones else
+               isinstance(bound_phones, str) and normalize_text(bound_phones) == encoded["phones"])
+    require(isinstance(bound_phones, str) and matches,
             "Alignment must explicitly bind to the final, mapped phoneme sequence")
     ids = encoded["phone_ids"]
     durations = row.get("phone_durations", row.get("durations"))
@@ -258,7 +261,8 @@ def prepare(manifest, audioroot, output, language, frontend, vocab, splitseed, *
                 require(raw[key] == source_sha, "Input audio hash differs from supplied " + key)
         wave, details = _audio(path, allow_resample=allow_resample, tolerance=clock_tolerance_samples,
                                trailing_silence_samples=raw.get("trailing_silence_samples"))
-        durations, label_source = _durations(raw, encoded, details, language)
+        durations, label_source = _durations(raw, encoded, details, language,
+                                           mapped_phones=front.phone_mapping is not None)
         row = dict(encoded, id=ident, raw_text=raw["text"], language=language, group=group,
                    audio="audio/" + hashlib.sha256(ident.encode()).hexdigest() + ".wav",
                    sample_count=len(wave), sample_rate=SAMPLE_RATE,
@@ -346,7 +350,8 @@ def load_prepared(path) -> dict:
                 and all(type(d) is int and d >= 1 for d in durations)
                 and sum(durations) * HOP == row["sample_count"], "Prepared durations/clock differ")
         require(2 * HOP <= row["sample_count"] <= 1200 * HOP, "Prepared duration exceeds model cap")
-        _durations(dict(row, alignment_phones=row["phones"]), row, row["audio_preparation"], row["language"])
+        _durations(dict(row, alignment_phones=row["phones"]), row, row["audio_preparation"], row["language"],
+                   mapped_phones=metadata["frontend"].get("phone_mapping") is not None)
         audio = _asset(root, row["audio"])
         require(sha256(audio) == row["audio_sha256"], "Prepared audio hash mismatch")
         wave, rate = sf.read(audio, dtype="float32")

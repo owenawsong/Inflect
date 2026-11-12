@@ -1,8 +1,9 @@
 # Mini v3 Model / Export Handoff
 
-This is the current model-bridge API. It supersedes the older README paragraph
-that said vocabulary migration was unsupported. The parent owns data preparation,
-frontend coverage, CLI, trainer/controller, GPU admission, and full-package assembly.
+This is the model-bridge API underlying the Mini v3 adaptation toolkit. Use the
+[language-adaptation guide](../docs/v3/language-adaptation/index.md) for the complete
+CLI workflow. Applications calling this lower-level API must separately manage
+data preparation, frontend coverage, training state and full-package assembly.
 
 ## Load And Configure
 

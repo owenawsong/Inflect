@@ -1,0 +1,62 @@
+{
+  "schema": "inflect-mini-v3-reuse-cpu-qualification-v1",
+  "date": "2026-11-12",
+  "passed": true,
+  "environment": {
+    "os": "Windows 11, 64-bit",
+    "cpu": "AMD Ryzen 9 3900X",
+    "python": "3.12.11",
+    "torch": "2.11.0+cpu",
+    "device": "cpu"
+  },
+  "configuration": {
+    "model": "Mini",
+    "voice": "cassidy",
+    "profile": "base",
+    "runtime": "canonical",
+    "seed": 42,
+    "sample_rate": 24000,
+    "channels": 1,
+    "subtype": "PCM_16"
+  },
+  "requests": {
+    "reused_session_render_calls": 2,
+    "independent_fresh_cli_controls": 2,
+    "observed_function_call_counts": {
+      "load_selected": 1,
+      "load_runtime": 1,
+      "load_export": 1,
+      "load_numeric": 1,
+      "prepare_text": 2,
+      "render": 2
+    }
+  },
+  "comparison": {
+    "method": "Full serialized WAV bytes, compared by SHA256",
+    "cases": [
+      {
+        "case_id": "example-1",
+        "frames": 85200,
+        "wav_sha256": "c9d0b2d04fb300acebd342e5f67d2987bb7be93630a8fb204fa30464cb797788",
+        "byte_exact_to_fresh_cli": true
+      },
+      {
+        "case_id": "example-2",
+        "frames": 87600,
+        "wav_sha256": "090d5e8f899a4c9139a2d37c08033fe5d454808698cc908b505b4f135f6bec3c",
+        "byte_exact_to_fresh_cli": true
+      }
+    ]
+  },
+  "identities": {
+    "example_source_sha256": "1b4a3d110df1d5d81da2527ceaf67617f1f7c4f7a678b265fde35eb0c69fd4df",
+    "core_assembly_sha256": "3df1dd36fe67562448c2e9560ae8d8610cd5a6369fd21f966bc002fab1308f95",
+    "core_weights_sha256": "8460e7d54a2fbf7fb54b3c7be7569c493c852de9a2aa1a0fd9fd9a099de581ed"
+  },
+  "method": {
+    "load_count_instrumentation": "Observational sys.setprofile calls matched to exact bundled source filenames; no model/runtime monkeypatches",
+    "package_identity": "Existing complete verified bundle matched by stable core hashes; not a claim that mutable root metadata was freshly downloaded for this test",
+    "timings_reported": false
+  },
+  "limits": "Two authored utterances and Cassidy only. Mechanical CPU load-reuse and byte-parity qualification, not a speedup, streaming, human-quality or generalization claim. No CUDA or optional-feature qualification."
+}

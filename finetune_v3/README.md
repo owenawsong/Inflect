@@ -10,6 +10,20 @@ Atom are not supported.
 Start with the [language-adaptation guide](../docs/v3/language-adaptation/index.md)
 or go directly to [command recipes](../docs/v3/language-adaptation/commands.md).
 
+## 0.1.1 Release Candidate
+
+Version 0.1.1 adds source-only verified model imports without deleting existing
+bytecode caches, and exact alignment binding for explicitly mapped phone
+codepoints. See the [changelog](CHANGELOG.md) and
+[security boundary](../docs/v3/language-adaptation/security-notes.md).
+The full CPU suite passed **199 tests, 1 skipped, 23 warnings**, including
+42 real-model cases. Version 0.1.1 also passed offline isolated-target import,
+strict checkpoint/export and raw-text inference from an unrelated Temp working
+directory: mono24 PCM16, 120 native frames, using existing qualified dependencies.
+This is not a fresh complete-dependency installation, a new CUDA-training
+qualification or a new-language quality result. Exact artifact pins and scope
+are recorded in [tested coverage](../docs/v3/language-adaptation/implementation-status.md).
+
 ## Install and Obtain the Base
 
 Use Python 3.12 and the appropriate PyTorch CPU/CUDA dependencies. From the
@@ -24,11 +38,13 @@ The [tested dependency snapshot](requirements-tested.txt) records versions from
 the existing verification environments, not a complete fresh-environment lock.
 Install the appropriate CPU or CUDA PyTorch build separately for your machine.
 
-The installed entry point is also `inflect-v3-adapt`. Version **0.1.0**, wheel
+The installed entry point is also `inflect-v3-adapt`. Historical version **0.1.0**, wheel
 build **r004**, passed raw-text generation from an unrelated Temp working
 directory using an isolated `--target` installation and an existing qualified
 dependency environment: mono24, 193 native frames. This is not a freshly
 downloaded complete-environment test.
+
+For complete pinned acquisition and verification, follow the [full-base recipe](../docs/v3/language-adaptation/pinned-base.md). For consistent phone/vocabulary/migration files and the separate phoneme-input/raw-text workflows, see [coordinated vocabulary](../docs/v3/language-adaptation/coordinated-vocabulary.md) and [two input workflows](../docs/v3/language-adaptation/two-input-workflows.md).
 
 Obtain the full official Mini package separately; the examples use
 `./inflect-mini-v3`. The tested public model-core `weights.pt` SHA256 is:
@@ -88,12 +104,14 @@ python -B -m finetune_v3 smoke-dataset --model ./inflect-mini-v3 --output ./adap
 ```
 
 Train/export that fixture under separate output names to exercise raw-text
-`say`. Parent verification passed this path with eSpeak `(1, 52, 0)`, default
-target Cassidy, and 120-frame mono24 output. CUDA two-update/resume-four and
-continuous-four runs also passed, with small nondeterminism, not bit-exact
-equivalence. See [tested scope and gates](../docs/v3/language-adaptation/implementation-status.md).
+`say`. Historical 0.1.0 verification passed the eSpeak `(1, 52, 0)` CUDA
+two-update/resume-four and continuous-four runs, with small nondeterminism,
+not bit-exact equivalence. Current 0.1.1 installed-package CPU export/raw-text
+checks passed with the saved default Cassidy target and 120-frame mono24 output;
+they do not constitute a new CUDA-training qualification. See
+[tested scope and gates](../docs/v3/language-adaptation/implementation-status.md).
 
-Final parent verification, including real-model integration and the notice
+Historical 0.1.0 parent verification, including real-model integration and the notice
 continuation regression, reported **180 passed, 1 skipped, 22 warnings in
 104.14 seconds**. The separate lightweight run
 reported 138 passed/1 skipped; v2 regression reported 39 passed. Source and

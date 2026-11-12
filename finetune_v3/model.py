@@ -6,6 +6,7 @@ from contextlib import contextmanager
 from copy import deepcopy
 import hashlib
 import importlib
+import importlib.util
 import json
 import math
 from pathlib import Path, PurePosixPath
@@ -79,34 +80,79 @@ def validate_inventory(path: str | Path, expected_weights_sha256: str | None = N
     return root, identity
 
 
-def _owned_module(name: str) -> bool:
-    return any(name == root or name.startswith(root + ".") for root in _ROOTS)
+def _owned_module(name: str, roots=_ROOTS) -> bool:
+    return any(name == root or name.startswith(root + ".") for root in roots)
+
+
+class _VerifiedSourceLoader:
+    def __init__(self, root: Path, source: Path, digest: str):
+        self.root, self.source, self.digest = root, source, digest
+
+    def create_module(self, spec):
+        return None
+
+    def exec_module(self, module):
+        require(self.source.resolve().is_relative_to(self.root) and self.source.is_file()
+                and not self.source.is_symlink(), "Unsafe runtime source: " + str(self.source))
+        # Compile the same bytes that were verified; never consult or write pyc caches.
+        data = self.source.read_bytes()
+        require(hashlib.sha256(data).hexdigest() == self.digest,
+                "Runtime source changed after inventory validation: " + str(self.source))
+        exec(compile(data, str(self.source), "exec", dont_inherit=True), module.__dict__)
+
+
+class _VerifiedSourceFinder:
+    def __init__(self, root: Path, files: dict[str, str]):
+        self.root, self.files = root, dict(files)
+        self.roots = set(_ROOTS) | {name.removeprefix("code/").split("/", 1)[0].removesuffix(".py")
+                                    for name in files if name.startswith("code/") and name.endswith(".py")}
+
+    def find_spec(self, fullname, path=None, target=None):
+        if not _owned_module(fullname, self.roots):
+            return None
+        base = "code/" + fullname.replace(".", "/")
+        package = base + "/__init__.py"
+        relative = package if package in self.files else base + ".py"
+        # An owned name must not fall through to bytecode, native extensions or sys.path.
+        if relative not in self.files:
+            raise ImportError("No inventoried runtime source for " + fullname)
+        source = self.root / relative
+        return importlib.util.spec_from_file_location(
+            fullname, source, loader=_VerifiedSourceLoader(self.root, source, self.files[relative]),
+            submodule_search_locations=[str(source.parent)] if relative == package else None)
 
 
 @contextmanager
-def runtime_imports(root: Path) -> Iterator[object]:
+def runtime_imports(root: Path, files: dict[str, str]) -> Iterator[object]:
     """Temporarily isolate the release's legacy absolute imports, then restore them."""
     with _IMPORT_LOCK:
-        previous = {name: module for name, module in sys.modules.items() if _owned_module(name)}
+        finder = _VerifiedSourceFinder(root, files)
+        previous = {name: module for name, module in sys.modules.items() if _owned_module(name, finder.roots)}
         old_path = sys.path[:]
+        old_meta_path = sys.meta_path[:]
         for name in previous:
             del sys.modules[name]
-        sys.path.insert(0, str(root / "code"))
+        # Owned sources resolve through the finder, not a general-purpose code/ path
+        # that could let unlisted bytecode shadow an ordinary installed dependency.
+        code_root = (root / "code").resolve()
+        sys.path[:] = [entry for entry in old_path if Path(entry or ".").resolve() != code_root]
+        sys.meta_path.insert(0, finder)
         try:
             runtime = importlib.import_module("native_mini_inference")
             yield runtime
         finally:
             for name in list(sys.modules):
-                if _owned_module(name):
+                if _owned_module(name, finder.roots):
                     del sys.modules[name]
             sys.modules.update(previous)
             sys.path[:] = old_path
+            sys.meta_path[:] = old_meta_path
 
 
 def _load_native(path: str | Path, expected_weights_sha256: str | None = None):
     root, identity = validate_inventory(path, expected_weights_sha256)
     require(str(torch.get_default_device()) == "cpu", "Construct on CPU before explicit device movement")
-    with runtime_imports(root) as runtime, torch.random.fork_rng(devices=[]):
+    with runtime_imports(root, identity["code_sha256"]) as runtime, torch.random.fork_rng(devices=[]):
         native = runtime.load_export(root, device="cpu", fast=False)
     require(native.text_kind == "native33", "Only the released native33 Mini architecture is supported")
     for name, count in COUNTS.items():

@@ -1,0 +1,162 @@
+{
+  "schema": "inflect-mini-public-base-local-evaluation-update-v1",
+  "date": "2026-11-12",
+  "scope": "Fresh local public-default Cassidy reproduction on known/development corpus; not independent heldout evidence, official submission or leaderboard rank",
+  "official_submission": false,
+  "all_six_voice_headline_replaced": false,
+  "result": {
+    "clips": 1688,
+    "datasets": [
+      {
+        "dataset": "cv3_eval_zero_shot_en",
+        "clips": 500,
+        "N": 7377,
+        "S": 70,
+        "D": 5,
+        "I": 6,
+        "edits": 81,
+        "wer_percent": 1.0980073200488003
+      },
+      {
+        "dataset": "seed_tts_eval_tts_en",
+        "clips": 1088,
+        "N": 11941,
+        "S": 83,
+        "D": 10,
+        "I": 2,
+        "edits": 95,
+        "wer_percent": 0.7955782597772381
+      },
+      {
+        "dataset": "minimax_eval_tts_en",
+        "clips": 100,
+        "N": 1900,
+        "S": 4,
+        "D": 1,
+        "I": 0,
+        "edits": 5,
+        "wer_percent": 0.2631578947368421
+      }
+    ],
+    "pooled": {
+      "N": 21218,
+      "S": 157,
+      "D": 16,
+      "I": 8,
+      "edits": 181
+    },
+    "macro_wer_percent": 0.7189144915209602,
+    "pooled_wer_percent": 0.8530492977660477
+  },
+  "protocol": {
+    "render": {
+      "voice": "cassidy",
+      "profile": "base",
+      "sample_rate": 24000,
+      "subtype": "PCM_16",
+      "seed": 42,
+      "enhancement": false,
+      "events": false,
+      "tuning": false,
+      "optional_delivery": false,
+      "text_input": "raw text"
+    },
+    "asr": {
+      "row_manifest_limit": 24,
+      "duration_sort": "within each consecutive block manifest, not global whole-corpus sorting",
+      "batch_size": 8,
+      "dtype": "bfloat16",
+      "max_new_tokens": 256,
+      "max_audio_seconds": 30,
+      "language": "en",
+      "torch_threads": 2,
+      "interop_threads": 1,
+      "tf32": false,
+      "references_as_prompts": false,
+      "denoise": false,
+      "fallback": false
+    }
+  },
+  "protocol_sha256": "6c9988b186523ed20533fe837f3bdde0082638d30b0793ef6322c5156e08e0f8",
+  "protocol_hash_encoding": "UTF-8 JSON of protocol object, sorted keys, compact separators, ensure_ascii=True, no trailing newline",
+  "identities": {
+    "core_weights_sha256": "8460e7d54a2fbf7fb54b3c7be7569c493c852de9a2aa1a0fd9fd9a099de581ed",
+    "release_manifest_sha256": "5d07ddb5d362927c99b2a06350f9ca269953c243356b55eb2b59d5399b4a70fc",
+    "assembly_manifest_sha256": "3df1dd36fe67562448c2e9560ae8d8610cd5a6369fd21f966bc002fab1308f95",
+    "asr_execution_plan_sha256": "53230093d1a0b7c8ea9675cfefd6bde09d274dc862efed433008c4c7c5d9cb06",
+    "asr_wrapper_sha256": "7ca8fda4c4ee9cd4774e28df379fbea418e27f38696b851ce004f7e883192c53",
+    "official_source_commit": "97109c086cf9a9c440e2b89a880aa1dcad567b4b",
+    "official_source_file_sha256": {
+      "normalizer/__init__.py": "8383b64028cdd20072e184ad427a6a05ebda6186309f5691a9715c80c4b2eb95",
+      "normalizer/data_utils.py": "13038c54eb4ff8b656f5aa8f18f591d6d0771c5fa429449de53ab4f78161ede9",
+      "normalizer/english_abbreviations.py": "d3b2c326bdb700b954b2c7125cd0c0b502deb7e22dbb57f707f914646098eaab",
+      "normalizer/eval_utils.py": "b109068da38e4990888c6e5ca6d36fe2b7c76f512deff43545c0bb9dac96b276",
+      "normalizer/normalizer.py": "78c8a3a3aa0f662ba505dac2fd4266c681bc9dd32d720cea94768f8bf5400b97",
+      "transformers/transcribe.py": "0dadc103e104439568431634558112a12d65320382e9c4af6ad449df63faf586",
+      "transformers/score_utmos.py": "55795acfce499829fb33084e3b2202555a00de6252e220837fe84313796df01f"
+    },
+    "asr_model": "Qwen/Qwen3-ASR-1.7B-hf",
+    "asr_model_revision": "bcd2b5b7f32b480ab5790554cfa8347f246a14f3",
+    "asr_asset_inventory_sha256": "059bed1f0699f9d5f3d51caaf1694d79760f4922c38f56583795e70f96c1613c",
+    "asr_assets": [
+      {
+        "path": "chat_template.jinja",
+        "size": 1434,
+        "sha256": "f50e6b694fbf4a683206e37869990d68333fe95d285730f084c838a34b0d98c2"
+      },
+      {
+        "path": "config.json",
+        "size": 2399,
+        "sha256": "117ac8e63e2af7cae3665e5a632d6eb03f5f384915519ceb6403c15ec6533f63"
+      },
+      {
+        "path": "generation_config.json",
+        "size": 165,
+        "sha256": "9939fc9388b79bd70757f938b87381e817173d6a6158f5af6506c0b73e775c3c"
+      },
+      {
+        "path": "processor_config.json",
+        "size": 487,
+        "sha256": "bc0b230081b44e629dd5b9045b78495615c1831b4b9f4cffe97bd37e82a6156a"
+      },
+      {
+        "path": "tokenizer_config.json",
+        "size": 998,
+        "sha256": "945e980986de2ca7768f3326bfdbb4fbea3406f972b8ae0be233089f2b253c11"
+      },
+      {
+        "path": "tokenizer.json",
+        "size": 11429653,
+        "sha256": "fe1fad59be22a41ee293363fcf95fdedbc7c93f3b49270b1d2e18bd1399a7a05",
+        "lfs_sha256": "fe1fad59be22a41ee293363fcf95fdedbc7c93f3b49270b1d2e18bd1399a7a05"
+      },
+      {
+        "path": "model.safetensors",
+        "size": 4076193080,
+        "sha256": "2db53c7d81bd9b8cbc6a074e89be2c968a0d373fb4ee68bb1b1e14f7042dfee1",
+        "lfs_sha256": "2db53c7d81bd9b8cbc6a074e89be2c968a0d373fb4ee68bb1b1e14f7042dfee1"
+      }
+    ],
+    "transformers_version": "5.13.0",
+    "transformers_source_commit": "6af945f436d85f2b0c5dff9b14feccd27b1d470b",
+    "asr_versions": {
+      "torch": "2.10.0+cu128",
+      "torchaudio": "2.10.0+cu128",
+      "tokenizers": "0.22.2",
+      "huggingface-hub": "1.5.0",
+      "safetensors": "0.8.0",
+      "accelerate": "1.11.0",
+      "kaldialign": "0.12.0",
+      "num2words": "0.5.14",
+      "librosa": "0.11.0",
+      "soundfile": "0.13.1",
+      "soxr": "1.0.0"
+    }
+  },
+  "existing_cpu_publication": {
+    "commit": "eed10583789fc8718bde51d01a893722ba04e66f",
+    "document": "docs/v3/single-thread-cpu.md",
+    "evidence": "docs/v3/evidence/singlethread-20261112.json",
+    "status": "Already published; linked only, not new evidence in this ASR update"
+  }
+}

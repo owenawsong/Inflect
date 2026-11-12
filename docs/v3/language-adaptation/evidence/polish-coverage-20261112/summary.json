@@ -1,0 +1,42 @@
+{
+  "schema": "inflect-mini-v3-label-free-polish-coverage-v1",
+  "date": "2026-11-12",
+  "scope": "Twelve authored texts through explicit eSpeak pl; native base codepoint coverage only",
+  "status": "explicit-vocabulary-migration-required",
+  "cases": 12,
+  "language": "pl",
+  "frontend": "espeak",
+  "engine_version": [1, 52, 0],
+  "python": "3.12",
+  "device": "cpu",
+  "dependencies": {"phonemizer-fork": "3.3.2", "espeakng-loader": "0.2.4"},
+  "base_vocabulary": {
+    "mapped_codepoints": 114,
+    "canonical_sha256": "248ee3192acfc27a9907180354a0efaa63389047a6ff78c3f75e2e19466d0b76",
+    "source_core_weights_sha256": "8460e7d54a2fbf7fb54b3c7be7569c493c852de9a2aa1a0fd9fd9a099de581ed",
+    "model_weights_loaded_by_this_check": false
+  },
+  "unknown_codepoints": [{"codepoint": "U+0291", "character": "ʑ", "occurrences": 8}],
+  "engine_asset_pins": {
+    "espeak-ng.dll": {"bytes": 419328, "sha256": "646d387acbc7ac2aa45e3625aa00a6835ae5d446ff8b0748298c3900b4dde258"},
+    "pl_dict": {"bytes": 76620, "sha256": "4daed8b7fce7bad6c690a8f040f254b6de5d238eb87cf0188a46f6b8a7030933"},
+    "lang/zlw/pl": {"bytes": 38, "sha256": "83c586a2b724b24b9f98d21ade5022112c465ac446ca09930286980ceae1c781"}
+  },
+  "pin_scope": "Actual DLL and the two attested Polish resource files; not a full all-language resource-tree attestation",
+  "source_pins": {
+    "frontend_code_sha256": "29c28b553afa79b695ea0b5d81c9b9275e9f3b8c0050a041d66648d377d40d92",
+    "authored_prompts_sha256": "256542a69d0c32063c82422ddb5ec5959340a89e02ae2546075b3c1f7327d537",
+    "source_report_sha256": "d624aecb81f1cdee6c7f311527ed0452bae54e790a58fb0922307c626518a264"
+  },
+  "source_recordings": false,
+  "speech_generated": false,
+  "alignments_generated": false,
+  "automatic_phone_mapping": false,
+  "new_ids_assigned": false,
+  "gpu_initialized": false,
+  "training": false,
+  "fluent_speaker_review": false,
+  "pronunciation_quality_qualified": false,
+  "language_support_qualified": false,
+  "limitations": "Counts are unknown codepoint occurrences, not pronunciation errors. Representable phones may still be wrong. This panel does not establish a complete Polish inventory or qualify speech, speaker identity, new-language acoustics or unseen text."
+}

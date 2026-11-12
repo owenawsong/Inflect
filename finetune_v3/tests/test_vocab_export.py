@@ -157,3 +157,23 @@ def test_migration_contract_must_be_replayed_for_resume(tmp_path):
     base.migrate_vocab({PHONE_A: unused[0]}, seed=43)
     with pytest.raises(ValueError, match="same explicit vocabulary migration"):
         load_checkpoint(base, checkpoint)
+
+
+def test_combining_map_native_migration_checkpoint_and_export_keep_exact_ids(tmp_path):
+    # Real-base integration: run only after parent admits model/export regression.
+    from finetune_v3.frontend import Frontend
+    model = load_mini(MODEL).eval()
+    unused = min(set(range(1, 178)) - set(model.vocab.values()))
+    model.migrate_vocab({'\u0301': unused}, seed=42)
+    rules = dict(language='fr-fr', name='explicit-tone-codepoint', replacements={'X': '\u0301'})
+    encoded = Frontend('fr-fr', 'prephonemized', model.vocab, phone_mapping=rules).encode('Fixture.', phones='aX')
+    expected = [0, model.vocab['a'], unused, 0]
+    assert encoded['phones'] == 'a\u0301' and encoded['phone_ids'] == expected
+    point = save_checkpoint(model, tmp_path / 'combining.pt', step=0)
+    restored = load_mini(MODEL).eval()
+    restored.migrate_vocab({'\u0301': unused}, seed=42)
+    load_checkpoint(restored, point)
+    assert restored.phoneme_ids(encoded['phones']) == expected
+    export_model(restored, tmp_path / 'combining-export')
+    deployed = load_public_runtime(tmp_path / 'combining-export')
+    assert deployed.phoneme_ids(encoded['phones']) == expected
