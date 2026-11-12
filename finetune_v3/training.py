@@ -27,9 +27,26 @@ TRAINING_EXECUTION_PROFILE = 'native24-reflect-cat-v1'
 
 def atomic_json(path, value):
     path = Path(path)
-    pending = path.with_suffix(path.suffix + '.pending')
-    pending.write_text(json.dumps(value, indent=2, allow_nan=False) + '\n', encoding='utf-8')
-    os.replace(pending, path)
+    payload = json.dumps(value, indent=2, allow_nan=False) + '\n'
+    pending = path.with_name('.' + path.name + '.' + str(os.getpid()) + '.' + uuid.uuid4().hex + '.pending')
+    owned = False
+    try:
+        with pending.open('x', encoding='utf-8', newline='\n') as stream:
+            owned = True
+            stream.write(payload)
+        # Windows readers can briefly deny replacement; never relax other errors.
+        delays = (.01, .02, .04, .08, .16, .25, .25)
+        for attempt in range(8):
+            try:
+                os.replace(pending, path)
+                break
+            except OSError as error:
+                if os.name != 'nt' or getattr(error, 'winerror', None) not in (5, 32, 33) or attempt == 7:
+                    raise
+                time.sleep(delays[attempt])
+    finally:
+        if owned:
+            pending.unlink(missing_ok=True)
 
 
 def utc():

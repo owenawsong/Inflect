@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.3 - Bounded Windows JSON Replacement
+
+- Use per-call UUID/pid pending paths with exclusive creation, avoiding a
+  shared pending filename between concurrent writers.
+- Retry only Windows os.replace errors5/32/33:8 attempts,7 delays totalling0.81s.
+  Other OS/errors fail immediately; persistent sharing errors still fail.
+- Clean only the current writer's owned pending file on success/failure.
+  Preserve prior committed JSON on failure; do not delete another writer's temp.
+- No model/loss, schema, execution-profile, dependency or inference change.
+  Add isolated IO policy/UTF8/cleanup/concurrency tests. This is bookkeeping,
+  not a language-quality gain or automatic checkpoint recovery.
+
+Final long-README wheel680c13 passed the installed CPU236/1skip suite, including
+42 native,20 publication and17 IO cases. One strict default-four-group CUDA
+update on RTX3060 plus CPU export/native24 raw-text WAV passed in29.766s.
+The two earlier failed test/fixture attempts remain documented. No final0.1.3
+resume, optimizer/WAV-parity or language-quality claim; the completed0.1.2
+resume sweep is historical. Exact artifacts and separate private evidence are
+identified in [version-specific scope](QUALIFICATION.md).
+
 ## 0.1.2 - Training Execution Profile (2026-11-12)
 
 - Express the existing multi-resolution STFT reflect-center values through

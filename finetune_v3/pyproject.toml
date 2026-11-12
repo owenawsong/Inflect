@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "inflect-mini-v3-adapt"
-version = "0.1.2"
+version = "0.1.3"
 description = "Explicit-alignment language and fixed-voice adaptation tools for Inflect Mini v3"
 readme = "README.md"
 requires-python = ">=3.12,<3.13"

@@ -10,6 +10,21 @@ Atom are not supported.
 Start with the [language-adaptation guide](../docs/v3/language-adaptation/index.md)
 or go directly to [command recipes](../docs/v3/language-adaptation/commands.md).
 
+## 0.1.3 Windows JSON Bookkeeping
+
+Training JSON writes use an exclusively created, unique temporary filename.
+On Windows only, replacement retries errors5/32/33 for at most8 attempts with
+7 delays totalling0.81s. Other errors and persistent locks remain fatal. Each
+writer cleans only its own pending file; concurrent writes remain atomic
+last-writer-wins, not transactional merging. This does not recover an unsaved
+checkpoint or permit bypassing controller identity.
+
+The model, loss, source weights, schemas and training execution profile are
+unchanged. See [version-specific qualification](QUALIFICATION.md) for exact
+artifact checks and limits; historical results are not automatically transferred
+to a newly built wheel. Preserve old runs/evidence and do not read live status
+with a deny-delete handle while another process is replacing it.
+
 ## 0.1.2 Training Execution Profile
 
 Version0.1.2 expresses the existing reflection values through explicit
